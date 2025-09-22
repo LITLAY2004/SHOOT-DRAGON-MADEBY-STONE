@@ -57,3 +57,6 @@ pids
 temp-*
 debug-*
 test-temp-*
+
+# Exclude docs for GitHub
+/docs/
