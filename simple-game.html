@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 塔防游戏 - 简单版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .game-container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        canvas {
+            border: 2px solid #4a9eff;
+            border-radius: 10px;
+            background: #000;
+            margin: 20px 0;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        button {
+            background: linear-gradient(45deg, #4a9eff, #00d4ff);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 158, 255, 0.4);
+        }
+
+        .info {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a9eff;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 塔防游戏</h1>
+        
+        <div class="info">
+            <p>🎯 保护你的基地，消灭所有敌人！</p>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="health">100</div>
+                <div class="stat-label">生命值</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="gold">500</div>
+                <div class="stat-label">金币</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="wave">1</div>
+                <div class="stat-label">波次</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="score">0</div>
+                <div class="stat-label">得分</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn">🚀 开始游戏</button>
+            <button id="pauseBtn">⏸️ 暂停</button>
+            <button id="towerBtn">🗼 建造塔</button>
+            <button id="upgradeBtn">⬆️ 升级</button>
+        </div>
+
+        <div class="info">
+            <p>📖 <strong>游戏说明：</strong></p>
+            <p>🖱️ 左键点击空地建造防御塔</p>
+            <p>💰 消灭敌人获得金币</p>
+            <p>🛡️ 保护基地不被敌人攻破</p>
+        </div>
+    </div>
+
+    <script>
+        // 简单的塔防游戏逻辑
+        class SimpleTowerDefense {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.gameState = {
+                    health: 100,
+                    gold: 500,
+                    wave: 1,
+                    score: 0,
+                    isPaused: false,
+                    isRunning: false
+                };
+                
+                this.towers = [];
+                this.enemies = [];
+                this.bullets = [];
+                this.path = this.generatePath();
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.draw();
+                this.showWelcomeMessage();
+            }
+
+            bindEvents() {
+                document.getElementById('startBtn').onclick = () => this.startGame();
+                document.getElementById('pauseBtn').onclick = () => this.togglePause();
+                document.getElementById('towerBtn').onclick = () => this.selectTowerMode();
+                document.getElementById('upgradeBtn').onclick = () => this.upgradeMode();
+                
+                this.canvas.onclick = (e) => this.handleCanvasClick(e);
+            }
+
+            generatePath() {
+                // 生成一个简单的路径
+                return [
+                    {x: 0, y: 300},
+                    {x: 200, y: 300},
+                    {x: 200, y: 150},
+                    {x: 400, y: 150},
+                    {x: 400, y: 450},
+                    {x: 600, y: 450},
+                    {x: 600, y: 300},
+                    {x: 800, y: 300}
+                ];
+            }
+
+            startGame() {
+                this.gameState.isRunning = true;
+                this.gameState.isPaused = false;
+                this.spawnWave();
+                this.gameLoop();
+                this.showNotification('🎮 游戏开始！', 'success');
+            }
+
+            togglePause() {
+                this.gameState.isPaused = !this.gameState.isPaused;
+                this.showNotification(this.gameState.isPaused ? '⏸️ 游戏暂停' : '▶️ 游戏继续', 'info');
+            }
+
+            selectTowerMode() {
+                this.towerMode = true;
+                this.showNotification('🗼 点击空地建造防御塔 (费用: 100金币)', 'info');
+            }
+
+            upgradeMode() {
+                this.upgradeMode = true;
+                this.showNotification('⬆️ 点击防御塔进行升级 (费用: 150金币)', 'info');
+            }
+
+            handleCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (this.towerMode && this.gameState.gold >= 100) {
+                    this.buildTower(x, y);
+                    this.towerMode = false;
+                }
+            }
+
+            buildTower(x, y) {
+                // 检查是否在路径上
+                if (this.isOnPath(x, y)) {
+                    this.showNotification('❌ 不能在路径上建造！', 'error');
+                    return;
+                }
+
+                this.towers.push({
+                    x: x,
+                    y: y,
+                    range: 80,
+                    damage: 25,
+                    level: 1,
+                    lastShot: 0
+                });
+
+                this.gameState.gold -= 100;
+                this.updateUI();
+                this.showNotification('✅ 防御塔建造成功！', 'success');
+            }
+
+            isOnPath(x, y) {
+                for (let i = 0; i < this.path.length - 1; i++) {
+                    const start = this.path[i];
+                    const end = this.path[i + 1];
+                    const distance = this.distanceToLine(x, y, start.x, start.y, end.x, end.y);
+                    if (distance < 30) return true;
+                }
+                return false;
+            }
+
+            distanceToLine(px, py, x1, y1, x2, y2) {
+                const A = px - x1;
+                const B = py - y1;
+                const C = x2 - x1;
+                const D = y2 - y1;
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                const param = lenSq !== 0 ? dot / lenSq : -1;
+                
+                let xx, yy;
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
+                } else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                } else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+                
+                const dx = px - xx;
+                const dy = py - yy;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            spawnWave() {
+                const enemyCount = 5 + this.gameState.wave * 2;
+                for (let i = 0; i < enemyCount; i++) {
+                    setTimeout(() => {
+                        this.enemies.push({
+                            x: this.path[0].x,
+                            y: this.path[0].y,
+                            health: 50 + this.gameState.wave * 10,
+                            maxHealth: 50 + this.gameState.wave * 10,
+                            speed: 1 + this.gameState.wave * 0.1,
+                            pathIndex: 0,
+                            reward: 25 + this.gameState.wave * 5
+                        });
+                    }, i * 1000);
+                }
+            }
+
+            gameLoop() {
+                if (!this.gameState.isRunning) return;
+
+                if (!this.gameState.isPaused) {
+                    this.update();
+                }
+                
+                this.draw();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            update() {
+                // 更新敌人
+                this.enemies.forEach((enemy, index) => {
+                    this.moveEnemy(enemy);
+                    
+                    // 检查是否到达终点
+                    if (enemy.pathIndex >= this.path.length - 1) {
+                        this.gameState.health -= 10;
+                        this.enemies.splice(index, 1);
+                        this.updateUI();
+                        
+                        if (this.gameState.health <= 0) {
+                            this.gameOver();
+                        }
+                    }
+                });
+
+                // 防御塔攻击
+                this.towers.forEach(tower => {
+                    const now = Date.now();
+                    if (now - tower.lastShot > 500) { // 每0.5秒攻击一次
+                        const target = this.findNearestEnemy(tower);
+                        if (target) {
+                            this.shootBullet(tower, target);
+                            tower.lastShot = now;
+                        }
+                    }
+                });
+
+                // 更新子弹
+                this.bullets.forEach((bullet, index) => {
+                    this.moveBullet(bullet);
+                    
+                    // 检查碰撞
+                    const enemy = this.enemies.find(e => 
+                        Math.sqrt((e.x - bullet.x) ** 2 + (e.y - bullet.y) ** 2) < 15
+                    );
+                    
+                    if (enemy) {
+                        enemy.health -= bullet.damage;
+                        this.bullets.splice(index, 1);
+                        
+                        if (enemy.health <= 0) {
+                            const enemyIndex = this.enemies.indexOf(enemy);
+                            this.enemies.splice(enemyIndex, 1);
+                            this.gameState.gold += enemy.reward;
+                            this.gameState.score += enemy.reward;
+                            this.updateUI();
+                        }
+                    }
+                    
+                    // 移除超出边界的子弹
+                    if (bullet.x < 0 || bullet.x > 800 || bullet.y < 0 || bullet.y > 600) {
+                        this.bullets.splice(index, 1);
+                    }
+                });
+
+                // 检查波次完成
+                if (this.enemies.length === 0 && this.gameState.isRunning) {
+                    this.nextWave();
+                }
+            }
+
+            moveEnemy(enemy) {
+                if (enemy.pathIndex >= this.path.length - 1) return;
+
+                const current = this.path[enemy.pathIndex];
+                const next = this.path[enemy.pathIndex + 1];
+                
+                const dx = next.x - current.x;
+                const dy = next.y - current.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    const moveX = (dx / distance) * enemy.speed;
+                    const moveY = (dy / distance) * enemy.speed;
+                    
+                    enemy.x += moveX;
+                    enemy.y += moveY;
+                    
+                    // 检查是否到达下一个路径点
+                    const distToNext = Math.sqrt((enemy.x - next.x) ** 2 + (enemy.y - next.y) ** 2);
+                    if (distToNext < 5) {
+                        enemy.pathIndex++;
+                    }
+                }
+            }
+
+            findNearestEnemy(tower) {
+                let nearest = null;
+                let minDistance = tower.range;
+                
+                this.enemies.forEach(enemy => {
+                    const distance = Math.sqrt((enemy.x - tower.x) ** 2 + (enemy.y - tower.y) ** 2);
+                    if (distance < minDistance) {
+                        nearest = enemy;
+                        minDistance = distance;
+                    }
+                });
+                
+                return nearest;
+            }
+
+            shootBullet(tower, target) {
+                this.bullets.push({
+                    x: tower.x,
+                    y: tower.y,
+                    targetX: target.x,
+                    targetY: target.y,
+                    speed: 5,
+                    damage: tower.damage
+                });
+            }
+
+            moveBullet(bullet) {
+                const dx = bullet.targetX - bullet.x;
+                const dy = bullet.targetY - bullet.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    bullet.x += (dx / distance) * bullet.speed;
+                    bullet.y += (dy / distance) * bullet.speed;
+                }
+            }
+
+            nextWave() {
+                this.gameState.wave++;
+                this.gameState.gold += 100; // 波次奖励
+                this.updateUI();
+                this.showNotification(`🌊 第 ${this.gameState.wave} 波来袭！`, 'warning');
+                
+                setTimeout(() => {
+                    this.spawnWave();
+                }, 2000);
+            }
+
+            gameOver() {
+                this.gameState.isRunning = false;
+                this.showNotification(`💀 游戏结束！最终得分: ${this.gameState.score}`, 'error');
+            }
+
+            draw() {
+                // 清空画布
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(0, 0, 800, 600);
+
+                // 绘制路径
+                this.drawPath();
+                
+                // 绘制防御塔
+                this.towers.forEach(tower => this.drawTower(tower));
+                
+                // 绘制敌人
+                this.enemies.forEach(enemy => this.drawEnemy(enemy));
+                
+                // 绘制子弹
+                this.bullets.forEach(bullet => this.drawBullet(bullet));
+            }
+
+            drawPath() {
+                this.ctx.strokeStyle = '#444';
+                this.ctx.lineWidth = 20;
+                this.ctx.beginPath();
+                
+                for (let i = 0; i < this.path.length - 1; i++) {
+                    const current = this.path[i];
+                    const next = this.path[i + 1];
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(current.x, current.y);
+                    }
+                    this.ctx.lineTo(next.x, next.y);
+                }
+                
+                this.ctx.stroke();
+            }
+
+            drawTower(tower) {
+                // 防御塔主体
+                this.ctx.fillStyle = '#4a9eff';
+                this.ctx.beginPath();
+                this.ctx.arc(tower.x, tower.y, 15, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // 攻击范围（鼠标悬停时显示）
+                this.ctx.strokeStyle = 'rgba(74, 158, 255, 0.2)';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+                this.ctx.stroke();
+            }
+
+            drawEnemy(enemy) {
+                // 敌人主体
+                this.ctx.fillStyle = '#ff4444';
+                this.ctx.beginPath();
+                this.ctx.arc(enemy.x, enemy.y, 12, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // 血条
+                const barWidth = 20;
+                const barHeight = 4;
+                const healthPercent = enemy.health / enemy.maxHealth;
+                
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(enemy.x - barWidth/2, enemy.y - 20, barWidth, barHeight);
+                
+                this.ctx.fillStyle = healthPercent > 0.5 ? '#4CAF50' : healthPercent > 0.25 ? '#FFA726' : '#F44336';
+                this.ctx.fillRect(enemy.x - barWidth/2, enemy.y - 20, barWidth * healthPercent, barHeight);
+            }
+
+            drawBullet(bullet) {
+                this.ctx.fillStyle = '#ffff44';
+                this.ctx.beginPath();
+                this.ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            updateUI() {
+                document.getElementById('health').textContent = this.gameState.health;
+                document.getElementById('gold').textContent = this.gameState.gold;
+                document.getElementById('wave').textContent = this.gameState.wave;
+                document.getElementById('score').textContent = this.gameState.score;
+            }
+
+            showNotification(message, type = 'info') {
+                console.log(`[${type.toUpperCase()}] ${message}`);
+                // 简单的控制台通知，实际项目中可以用更好的UI
+            }
+
+            showWelcomeMessage() {
+                this.showNotification('🎮 欢迎来到塔防游戏！点击"开始游戏"开始战斗！', 'success');
+            }
+        }
+
+        // 启动游戏
+        window.onload = () => {
+            new SimpleTowerDefense();
+        };
+    </script>
+</body>
+</html>

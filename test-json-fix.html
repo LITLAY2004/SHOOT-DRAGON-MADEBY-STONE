@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON错误修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border-color: #b6d4e0;
+            color: #0c5460;
+        }
+        #console-output {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 JSON解析错误修复测试</h1>
+        
+        <div class="test-section info">
+            <h3>测试说明</h3>
+            <p>这个测试验证了ProgressionSystem在遇到无效JSON数据时的错误处理能力。</p>
+            <p>修复前：会在控制台输出大量错误信息</p>
+            <p>修复后：使用静默模式，不会输出错误信息，但功能正常</p>
+        </div>
+
+        <div class="test-section">
+            <h3>测试操作</h3>
+            <button onclick="runTests()">🚀 运行测试</button>
+            <button onclick="clearConsole()">🧹 清空日志</button>
+            <button onclick="resetStorage()">🔄 重置存储</button>
+        </div>
+
+        <div class="test-section">
+            <h3>控制台输出</h3>
+            <div id="console-output"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试结果</h3>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <!-- 加载依赖文件 -->
+    <script src="src/systems/ProgressionSystem.js"></script>
+    <script src="src/modes/EndlessMode.js"></script>
+
+    <script>
+        // 劫持console.error和console.log来显示输出
+        const originalConsoleError = console.error;
+        const originalConsoleLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        function logToPage(type, ...args) {
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.error = (...args) => {
+            originalConsoleError(...args);
+            logToPage('error', ...args);
+        };
+        
+        console.log = (...args) => {
+            originalConsoleLog(...args);
+            logToPage('log', ...args);
+        };
+        
+        function clearConsole() {
+            consoleOutput.textContent = '';
+        }
+        
+        function resetStorage() {
+            localStorage.clear();
+            logToPage('info', 'localStorage已清空');
+        }
+        
+        function showResult(success, message) {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = `
+                <div class="${success ? 'success' : 'error'}">
+                    <strong>${success ? '✅ 测试通过' : '❌ 测试失败'}</strong><br>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        async function runTests() {
+            clearConsole();
+            console.log('🚀 开始运行JSON错误修复测试...');
+            
+            try {
+                // 测试1: 设置无效的JSON数据
+                console.log('\n📋 测试1: 设置无效JSON数据');
+                localStorage.setItem('towerDefenseProgress', '{"invalid": json}');
+                localStorage.setItem('endlessLeaderboard', 'not json at all');
+                console.log('已设置无效的JSON数据到localStorage');
+                
+                // 测试2: 创建ProgressionSystem实例（静默模式）
+                console.log('\n📋 测试2: 创建ProgressionSystem（静默模式）');
+                const progressionSystem = new ProgressionSystem(null, { silent: true });
+                console.log('ProgressionSystem创建成功（静默模式）');
+                
+                // 验证数据是否正确初始化
+                if (progressionSystem.data && 
+                    Array.isArray(progressionSystem.data.completedLevels) &&
+                    typeof progressionSystem.data.totalMoney === 'number') {
+                    console.log('✅ 数据结构正确初始化');
+                    console.log('completedLevels:', progressionSystem.data.completedLevels);
+                    console.log('totalMoney:', progressionSystem.data.totalMoney);
+                } else {
+                    throw new Error('数据结构初始化失败');
+                }
+                
+                // 测试3: 创建ProgressionSystem实例（非静默模式，应该看到错误）
+                console.log('\n📋 测试3: 创建ProgressionSystem（非静默模式，应该看到错误信息）');
+                const progressionSystem2 = new ProgressionSystem(null, { silent: false });
+                console.log('ProgressionSystem创建成功（非静默模式）');
+                
+                // 测试4: 创建EndlessMode测试
+                console.log('\n📋 测试4: 测试EndlessMode错误处理');
+                const mockGame = {
+                    addDamageNumber: () => {},
+                    state: { gameRunning: false },
+                    canvas: { width: 800, height: 600 },
+                    camera: { x: 0, y: 0 },
+                    createHitParticles: () => {},
+                    skillSystem: {
+                        getTotalUpgrades: () => ({}),
+                        resetUpgrades: () => {}
+                    },
+                    reset: () => {}
+                };
+                
+                const endlessMode = new EndlessMode(mockGame);
+                const leaderboard = endlessMode.getLeaderboard();
+                console.log('EndlessMode leaderboard:', leaderboard);
+                
+                // 测试完成
+                showResult(true, '所有测试通过！JSON错误处理正常工作。');
+                console.log('\n🎉 所有测试通过！');
+                
+            } catch (error) {
+                console.error('测试失败:', error);
+                showResult(false, `测试失败: ${error.message}`);
+            }
+        }
+        
+        // 页面加载后自动运行测试
+        window.addEventListener('load', () => {
+            console.log('页面加载完成，准备运行测试...');
+            setTimeout(runTests, 1000); // 延迟1秒确保所有脚本加载完成
+        });
+    </script>
+</body>
+</html>

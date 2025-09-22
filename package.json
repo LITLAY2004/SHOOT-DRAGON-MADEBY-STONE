@@ -1,0 +1,32 @@
+{
+  "name": "dragon-hunter-game",
+  "version": "1.0.0",
+  "description": "数字龙猎 - Number Dragon Hunter Game",
+  "main": "index.html",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:unit": "jest --testPathPattern=unit",
+    "serve": "python3 -m http.server 8080",
+    "serve:test": "python3 -m http.server 8081"
+  },
+  "keywords": [
+    "game",
+    "tower-defense",
+    "javascript",
+    "canvas",
+    "dragon-hunter"
+  ],
+  "author": "AI Assistant",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.5",
+    "canvas": "^2.11.2",
+    "jest": "^29.7.0",
+    "jest-canvas-mock": "^2.5.2",
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^22.1.0"
+  }
+}

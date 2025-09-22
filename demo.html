@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Cyber Tower Defense - 界面演示</title>
+    
+    <!-- 引入科技风格主题 -->
+    <link rel="stylesheet" href="styles/cyber-theme.css">
+    <!-- 引入现代字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .demo-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .demo-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-accent);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .component-demo {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-secondary);
+            border-radius: 8px;
+        }
+        
+        .skill-demo {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .progress-demo {
+            margin: 20px 0;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--gradient-background);
+            border-radius: 16px;
+            margin-bottom: 40px;
+        }
+        
+        .hero-title {
+            font-size: 48px;
+            font-weight: 700;
+            background: var(--gradient-neon);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-shadow: none;
+        }
+        
+        .hero-subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        .feature-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+        
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all var(--transition-normal);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-strong);
+            border-color: var(--border-glow);
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity var(--transition-normal);
+            z-index: -1;
+        }
+        
+        .feature-card:hover::before {
+            opacity: 0.1;
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        
+        .color-item {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .animation-demo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .floating-element {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- 动画背景网格 -->
+    <div class="cyber-grid"></div>
+    
+    <div class="demo-container">
+        <!-- 英雄区域 -->
+        <section class="hero-section">
+            <h1 class="hero-title">CYBER TOWER DEFENSE</h1>
+            <p class="hero-subtitle">科技简约风格界面设计演示</p>
+            <button class="cyber-button">体验游戏</button>
+        </section>
+        
+        <!-- 配色方案 -->
+        <section class="demo-section">
+            <h2 class="demo-title">🎨 配色方案</h2>
+            <p>采用赛博朋克风格的配色，以青色为主色调，搭配紫色、粉色等霓虹色彩</p>
+            <div class="color-palette">
+                <div class="color-item" style="background: #00ffff;">主色调青</div>
+                <div class="color-item" style="background: #0080ff;">主色调蓝</div>
+                <div class="color-item" style="background: #6366f1;">主色调靛</div>
+                <div class="color-item" style="background: #ff006e;">霓虹粉</div>
+                <div class="color-item" style="background: #8338ec;">霓虹紫</div>
+                <div class="color-item" style="background: #3fb950;">霓虹绿</div>
+            </div>
+        </section>
+        
+        <!-- 按钮组件 -->
+        <section class="demo-section">
+            <h2 class="demo-title">🔘 按钮组件</h2>
+            <div class="component-grid">
+                <div class="component-demo">
+                    <h4>主要按钮</h4>
+                    <button class="cyber-button">开始游戏</button>
+                </div>
+                <div class="component-demo">
+                    <h4>发光边框按钮</h4>
+                    <button class="cyber-button neon-border">特殊技能</button>
+                </div>
+                <div class="component-demo">
+                    <h4>禁用状态</h4>
+                    <button class="cyber-button" disabled>升级中...</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 技能图标 -->
+        <section class="demo-section">
+            <h2 class="demo-title">⚔️ 技能图标</h2>
+            <div class="skill-demo">
+                <div class="skill-icon available">
+                    <span class="skill-number">1</span>
+                    🎯
+                </div>
+                <div class="skill-icon available">
+                    <span class="skill-number">2</span>
+                    💥
+                </div>
+                <div class="skill-icon cooldown">
+                    <span class="skill-number">3</span>
+                    🛡️
+                    <div class="skill-cooldown-overlay">5</div>
+                </div>
+                <div class="skill-icon insufficient-mana">
+                    <span class="skill-number">4</span>
+                    ⏰
+                </div>
+                <div class="skill-icon available">
+                    <span class="skill-number">5</span>
+                    🌪️
+                </div>
+                <div class="skill-icon available">
+                    <span class="skill-number">6</span>
+                    ⚔️
+                </div>
+            </div>
+        </section>
+        
+        <!-- 进度条 -->
+        <section class="demo-section">
+            <h2 class="demo-title">📊 进度条</h2>
+            <div class="progress-demo">
+                <h4>生命值</h4>
+                <div class="progress-bar health-bar">
+                    <div class="progress-fill" style="width: 75%"></div>
+                </div>
+                
+                <h4>法力值</h4>
+                <div class="progress-bar mana-bar">
+                    <div class="progress-fill" style="width: 60%"></div>
+                </div>
+                
+                <h4>经验值</h4>
+                <div class="cyber-progress">
+                    <div class="cyber-progress-bar" style="width: 45%"></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 卡片组件 -->
+        <section class="demo-section">
+            <h2 class="demo-title">🗃️ 卡片组件</h2>
+            <div class="feature-showcase">
+                <div class="cyber-card">
+                    <h3>主动技能系统</h3>
+                    <p>6个独特的主动技能，每个都有独特的效果和冷却时间</p>
+                </div>
+                <div class="cyber-card">
+                    <h3>被动技能系统</h3>
+                    <p>可升级的被动技能，提供持续的能力提升</p>
+                </div>
+                <div class="cyber-card">
+                    <h3>元素系统</h3>
+                    <p>丰富的元素特效和克制关系</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 输入框 -->
+        <section class="demo-section">
+            <h2 class="demo-title">📝 输入组件</h2>
+            <div class="component-grid">
+                <div class="component-demo">
+                    <h4>文本输入</h4>
+                    <input type="text" class="cyber-input" placeholder="输入玩家名称...">
+                </div>
+                <div class="component-demo">
+                    <h4>焦点状态</h4>
+                    <input type="text" class="cyber-input" placeholder="点击查看效果" style="border-color: #00ffff; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);">
+                </div>
+            </div>
+        </section>
+        
+        <!-- 动画效果 -->
+        <section class="demo-section">
+            <h2 class="demo-title">✨ 动画效果</h2>
+            <div class="animation-demo">
+                <div class="floating-element">
+                    <div class="cyber-card" style="width: 200px;">
+                        <span style="font-size: 24px;">🚀</span>
+                        <h4>浮动动画</h4>
+                        <p>平滑的悬浮效果</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 通知系统 -->
+        <section class="demo-section">
+            <h2 class="demo-title">🔔 通知系统</h2>
+            <div class="component-grid">
+                <div class="component-demo">
+                    <button class="cyber-button" onclick="showDemoNotification('success')">成功通知</button>
+                </div>
+                <div class="component-demo">
+                    <button class="cyber-button" onclick="showDemoNotification('warning')">警告通知</button>
+                </div>
+                <div class="component-demo">
+                    <button class="cyber-button" onclick="showDemoNotification('error')">错误通知</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 加载效果 -->
+        <section class="demo-section">
+            <h2 class="demo-title">⏳ 加载效果</h2>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 40px; height: 100px;">
+                <div class="loading-spinner"></div>
+                <div class="cyber-progress" style="width: 200px;">
+                    <div class="cyber-progress-bar" style="width: 70%"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- 通知容器 -->
+    <div id="notifications"></div>
+    
+    <script>
+        // 演示通知系统
+        function showDemoNotification(type) {
+            const messages = {
+                success: '✅ 操作成功完成！',
+                warning: '⚠️ 请注意法力值不足',
+                error: '❌ 连接服务器失败'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = messages[type];
+            
+            const container = document.getElementById('notifications');
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        // 添加一些互动效果
+        document.addEventListener('DOMContentLoaded', () => {
+            // 为所有卡片添加脉冲效果
+            const cards = document.querySelectorAll('.cyber-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('pulse');
+                    setTimeout(() => {
+                        card.classList.remove('pulse');
+                    }, 2000);
+                }, index * 500);
+            });
+            
+            // 技能图标悬停效果
+            const skillIcons = document.querySelectorAll('.skill-icon.available');
+            skillIcons.forEach(icon => {
+                icon.addEventListener('mouseenter', () => {
+                    icon.style.transform = 'translateY(-4px) scale(1.1)';
+                });
+                
+                icon.addEventListener('mouseleave', () => {
+                    icon.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

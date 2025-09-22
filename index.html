@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Cyber Tower Defense - 科技塔防</title>
+    <!-- 引入科技风格主题 -->
+    <link rel="stylesheet" href="styles/cyber-theme.css">
+    <!-- 引入现代字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(79, 209, 199, 0.3);
+        }
+        
+        .test-canvas {
+            border: 2px solid #4fd1c7;
+            border-radius: 8px;
+            background: #000;
+            display: block;
+            margin: 10px auto;
+        }
+        
+        .test-controls {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .test-button {
+            background: linear-gradient(45deg, #4fd1c7, #06b6d4);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 209, 199, 0.4);
+        }
+        
+        .test-info {
+            background: rgba(79, 209, 199, 0.1);
+            border-left: 4px solid #4fd1c7;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .test-results {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .test-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .status-pass { background: #10b981; color: white; }
+        .status-fail { background: #ef4444; color: white; }
+        .status-pending { background: #f59e0b; color: white; }
+        
+        h1, h2 { color: #4fd1c7; }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid rgba(79, 209, 199, 0.3);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .comparison-table th {
+            background: rgba(79, 209, 199, 0.2);
+            font-weight: bold;
+        }
+        
+        .version-original { color: #fbbf24; }
+        .version-refactored { color: #4fd1c7; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 重构版本浏览器兼容性测试</h1>
+        
+        <div class="test-info">
+            <strong>测试目标：</strong>验证重构版本在浏览器环境中的功能完整性和与原版的兼容性
+        </div>
+
+        <!-- 基础功能测试 -->
+        <div class="test-section">
+            <h2>1. 基础功能测试</h2>
+            <div class="test-controls">
+                <button class="test-button" onclick="testBasicFunctionality()">运行基础测试</button>
+                <span id="basic-status" class="test-status status-pending">待测试</span>
+            </div>
+            <div id="basic-results" class="test-results">点击运行测试...</div>
+        </div>
+
+        <!-- 兼容性对比测试 -->
+        <div class="test-section">
+            <h2>2. 兼容性对比测试</h2>
+            <div class="test-controls">
+                <button class="test-button" onclick="testCompatibility()">对比测试</button>
+                <span id="compatibility-status" class="test-status status-pending">待测试</span>
+            </div>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>属性/方法</th>
+                        <th class="version-original">原版 (game.js)</th>
+                        <th class="version-refactored">重构版 (refactored)</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="compatibility-table">
+                    <tr><td colspan="4">运行测试以查看结果...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 游戏功能演示 -->
+        <div class="test-section">
+            <h2>3. 游戏功能演示</h2>
+            <div class="test-controls">
+                <button class="test-button" onclick="startOriginalDemo()">启动原版演示</button>
+                <button class="test-button" onclick="startRefactoredDemo()">启动重构版演示</button>
+                <button class="test-button" onclick="stopAllDemos()">停止所有演示</button>
+            </div>
+            
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <div style="text-align: center;">
+                    <h3 class="version-original">原版游戏</h3>
+                    <canvas id="originalCanvas" class="test-canvas" width="400" height="300"></canvas>
+                    <div id="original-info">点击启动原版演示</div>
+                </div>
+                <div style="text-align: center;">
+                    <h3 class="version-refactored">重构版游戏</h3>
+                    <canvas id="refactoredCanvas" class="test-canvas" width="400" height="300"></canvas>
+                    <div id="refactored-info">点击启动重构版演示</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 性能对比 -->
+        <div class="test-section">
+            <h2>4. 性能对比测试</h2>
+            <div class="test-controls">
+                <button class="test-button" onclick="testPerformance()">运行性能测试</button>
+                <span id="performance-status" class="test-status status-pending">待测试</span>
+            </div>
+            <div id="performance-results" class="test-results">点击运行性能测试...</div>
+        </div>
+
+        <!-- 技能系统说明 -->
+        <div class="test-section">
+            <h2>⚔️ 技能系统说明</h2>
+            <div class="test-info">
+                <strong>🎮 操作控制：</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>WASD / 方向键：</strong>移动角色</li>
+                    <li><strong>数字键 1-6：</strong>使用主动技能</li>
+                    <li><strong>鼠标移动：</strong>自动瞄准射击</li>
+                </ul>
+            </div>
+            
+            <div class="comparison-table" style="font-size: 14px;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr style="background: rgba(79, 209, 199, 0.2);">
+                            <th style="padding: 8px;">技能键</th>
+                            <th style="padding: 8px;">技能名称</th>
+                            <th style="padding: 8px;">效果描述</th>
+                            <th style="padding: 8px;">法力消耗</th>
+                            <th style="padding: 8px;">冷却时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 6px; text-align: center;"><strong>1</strong></td>
+                            <td style="padding: 6px;">🎯 齐射</td>
+                            <td style="padding: 6px;">向所有方向发射8枚子弹</td>
+                            <td style="padding: 6px;">25</td>
+                            <td style="padding: 6px;">5秒</td>
+                        </tr>
+                        <tr style="background: rgba(255, 255, 255, 0.05);">
+                            <td style="padding: 6px; text-align: center;"><strong>2</strong></td>
+                            <td style="padding: 6px;">💥 爆发射击</td>
+                            <td style="padding: 6px;">快速连射，射速提升5倍</td>
+                            <td style="padding: 6px;">30</td>
+                            <td style="padding: 6px;">8秒</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px; text-align: center;"><strong>3</strong></td>
+                            <td style="padding: 6px;">🛡️ 能量护盾</td>
+                            <td style="padding: 6px;">10秒内免疫所有伤害</td>
+                            <td style="padding: 6px;">40</td>
+                            <td style="padding: 6px;">20秒</td>
+                        </tr>
+                        <tr style="background: rgba(255, 255, 255, 0.05);">
+                            <td style="padding: 6px; text-align: center;"><strong>4</strong></td>
+                            <td style="padding: 6px;">⏰ 时间扭曲</td>
+                            <td style="padding: 6px;">减缓所有敌人50%移动速度</td>
+                            <td style="padding: 6px;">35</td>
+                            <td style="padding: 6px;">15秒</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px; text-align: center;"><strong>5</strong></td>
+                            <td style="padding: 6px;">🌪️ 元素风暴</td>
+                            <td style="padding: 6px;">召唤随机元素风暴攻击</td>
+                            <td style="padding: 6px;">50</td>
+                            <td style="padding: 6px;">12秒</td>
+                        </tr>
+                        <tr style="background: rgba(255, 255, 255, 0.05);">
+                            <td style="padding: 6px; text-align: center;"><strong>6</strong></td>
+                            <td style="padding: 6px;">⚔️ 屠龙剑气</td>
+                            <td style="padding: 6px;">对龙类造成10倍伤害</td>
+                            <td style="padding: 6px;">60</td>
+                            <td style="padding: 6px;">25秒</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="test-info" style="margin-top: 15px;">
+                <strong>🔄 被动技能系统：</strong>
+                <p style="margin: 8px 0; font-size: 13px;">
+                    • <strong>快速装填：</strong>提升攻击速度<br>
+                    • <strong>双重射击：</strong>概率发射额外子弹<br>
+                    • <strong>魔法护甲：</strong>减少受到的伤害<br>
+                    • <strong>法力效率：</strong>降低技能消耗<br>
+                    • <strong>致命一击：</strong>概率造成暴击伤害<br>
+                    • <strong>吸血：</strong>击败敌人时恢复生命值
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载核心模块 -->
+    <script src="src/utils/MathUtils.js"></script>
+    <script src="src/core/EventSystem.js"></script>
+    <script src="src/core/GameState.js"></script>
+    <script src="src/config/ElementConfig.js"></script>
+    <script src="src/config/BalanceConfig.js"></script>
+    <script src="src/systems/elements/ElementSystem.js"></script>
+    <script src="src/systems/SkillSystem.js"></script>
+    <script src="src/core/GameController.js"></script>
+    
+    <!-- 加载游戏版本 -->
+    <script src="src/game.js"></script>
+
+    <script>
+        let originalGame = null;
+        let refactoredGame = null;
+        let testResults = {};
+
+        // 基础功能测试
+        function testBasicFunctionality() {
+            const results = document.getElementById('basic-results');
+            const status = document.getElementById('basic-status');
+            
+            results.innerHTML = '<div>🚀 开始基础功能测试...</div>';
+            
+            try {
+                // 测试重构版本实例化
+                const canvas = document.getElementById('refactoredCanvas');
+                const game = new DragonHunterGame(canvas);
+                
+                let testLog = [];
+                
+                testLog.push('✅ 重构版本实例化成功');
+                testLog.push(`✅ Canvas: ${game.canvas ? 'OK' : 'FAIL'}`);
+                testLog.push(`✅ 宽度: ${game.width} (${game.width === 400 ? 'OK' : 'FAIL'})`);
+                testLog.push(`✅ 高度: ${game.height} (${game.height === 300 ? 'OK' : 'FAIL'})`);
+                testLog.push(`✅ 游戏状态: ${typeof game.gameStarted === 'boolean' ? 'OK' : 'FAIL'}`);
+                testLog.push(`✅ 分数: ${typeof game.score === 'number' ? 'OK' : 'FAIL'}`);
+                testLog.push(`✅ 生命值: ${typeof game.lives === 'number' ? 'OK' : 'FAIL'}`);
+                testLog.push(`✅ 玩家对象: ${game.player ? 'OK' : 'FAIL'}`);
+                testLog.push(`✅ 核心方法: ${typeof game.startGame === 'function' ? 'OK' : 'FAIL'}`);
+                
+                results.innerHTML = testLog.map(log => `<div>${log}</div>`).join('');
+                status.textContent = '通过';
+                status.className = 'test-status status-pass';
+                
+                testResults.basic = true;
+                
+            } catch (error) {
+                results.innerHTML = `<div>❌ 基础功能测试失败: ${error.message}</div>`;
+                status.textContent = '失败';
+                status.className = 'test-status status-fail';
+                testResults.basic = false;
+            }
+        }
+
+        // 兼容性对比测试
+        function testCompatibility() {
+            const table = document.getElementById('compatibility-table');
+            const status = document.getElementById('compatibility-status');
+            
+            try {
+                const originalCanvas = document.getElementById('originalCanvas');
+                const refactoredCanvas = document.getElementById('refactoredCanvas');
+                
+                const original = new window.DragonHunterGame(originalCanvas);
+                const refactored = new DragonHunterGame(refactoredCanvas);
+                
+                const comparisons = [
+                    { prop: 'width', label: '画布宽度' },
+                    { prop: 'height', label: '画布高度' },
+                    { prop: 'gameStarted', label: '游戏开始状态' },
+                    { prop: 'gameOver', label: '游戏结束状态' },
+                    { prop: 'score', label: '分数' },
+                    { prop: 'lives', label: '生命值' },
+                    { prop: 'wave', label: '波次' },
+                    { prop: 'bullets', label: '子弹数组', isArray: true },
+                    { prop: 'startGame', label: '开始游戏方法', isFunction: true },
+                    { prop: 'pauseGame', label: '暂停游戏方法', isFunction: true },
+                    { prop: 'shoot', label: '射击方法', isFunction: true },
+                ];
+                
+                let allMatch = true;
+                const tableRows = comparisons.map(comp => {
+                    const origVal = original[comp.prop];
+                    const refVal = refactored[comp.prop];
+                    
+                    let origDisplay, refDisplay, matches;
+                    
+                    if (comp.isFunction) {
+                        origDisplay = typeof origVal === 'function' ? '✓ 函数' : '✗ 非函数';
+                        refDisplay = typeof refVal === 'function' ? '✓ 函数' : '✗ 非函数';
+                        matches = typeof origVal === 'function' && typeof refVal === 'function';
+                    } else if (comp.isArray) {
+                        origDisplay = Array.isArray(origVal) ? `✓ 数组[${origVal.length}]` : '✗ 非数组';
+                        refDisplay = Array.isArray(refVal) ? `✓ 数组[${refVal.length}]` : '✗ 非数组';
+                        matches = Array.isArray(origVal) && Array.isArray(refVal);
+                    } else {
+                        origDisplay = String(origVal);
+                        refDisplay = String(refVal);
+                        matches = origVal === refVal;
+                    }
+                    
+                    if (!matches) allMatch = false;
+                    
+                    return `
+                        <tr>
+                            <td>${comp.label}</td>
+                            <td class="version-original">${origDisplay}</td>
+                            <td class="version-refactored">${refDisplay}</td>
+                            <td>${matches ? '✅ 匹配' : '❌ 不匹配'}</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                table.innerHTML = tableRows;
+                
+                status.textContent = allMatch ? '通过' : '部分通过';
+                status.className = allMatch ? 'test-status status-pass' : 'test-status status-fail';
+                
+                testResults.compatibility = allMatch;
+                
+            } catch (error) {
+                table.innerHTML = `<tr><td colspan="4">❌ 兼容性测试失败: ${error.message}</td></tr>`;
+                status.textContent = '失败';
+                status.className = 'test-status status-fail';
+                testResults.compatibility = false;
+            }
+        }
+
+        // 启动原版演示
+        function startOriginalDemo() {
+            try {
+                if (originalGame) {
+                    originalGame.destroy();
+                }
+                
+                const canvas = document.getElementById('originalCanvas');
+                originalGame = new window.DragonHunterGame(canvas);
+                originalGame.startGame();
+                
+                document.getElementById('original-info').textContent = '✅ 原版游戏运行中...';
+            } catch (error) {
+                document.getElementById('original-info').textContent = `❌ 原版启动失败: ${error.message}`;
+            }
+        }
+
+        // 启动重构版演示
+        function startRefactoredDemo() {
+            try {
+                if (refactoredGame) {
+                    refactoredGame.destroy();
+                }
+                
+                const canvas = document.getElementById('refactoredCanvas');
+                refactoredGame = new DragonHunterGame(canvas);
+                refactoredGame.startGame();
+                
+                document.getElementById('refactored-info').textContent = '✅ 重构版游戏运行中...';
+            } catch (error) {
+                document.getElementById('refactored-info').textContent = `❌ 重构版启动失败: ${error.message}`;
+            }
+        }
+
+        // 停止所有演示
+        function stopAllDemos() {
+            if (originalGame) {
+                originalGame.destroy();
+                originalGame = null;
+            }
+            if (refactoredGame) {
+                refactoredGame.destroy();
+                refactoredGame = null;
+            }
+            
+            document.getElementById('original-info').textContent = '⏹️ 原版游戏已停止';
+            document.getElementById('refactored-info').textContent = '⏹️ 重构版游戏已停止';
+        }
+
+        // 性能对比测试
+        function testPerformance() {
+            const results = document.getElementById('performance-results');
+            const status = document.getElementById('performance-status');
+            
+            results.innerHTML = '<div>🔄 运行性能测试...</div>';
+            
+            try {
+                const iterations = 100;
+                let originalTimes = [];
+                let refactoredTimes = [];
+                
+                // 测试原版性能
+                for (let i = 0; i < iterations; i++) {
+                    const start = performance.now();
+                    const originalCanvas = document.createElement('canvas');
+                    originalCanvas.width = 400;
+                    originalCanvas.height = 300;
+                    const original = new window.DragonHunterGame(originalCanvas);
+                    const end = performance.now();
+                    originalTimes.push(end - start);
+                }
+                
+                // 测试重构版性能
+                for (let i = 0; i < iterations; i++) {
+                    const start = performance.now();
+                    const refactoredCanvas = document.createElement('canvas');
+                    refactoredCanvas.width = 400;
+                    refactoredCanvas.height = 300;
+                    const refactored = new DragonHunterGame(refactoredCanvas);
+                    const end = performance.now();
+                    refactoredTimes.push(end - start);
+                }
+                
+                const originalAvg = originalTimes.reduce((a, b) => a + b, 0) / iterations;
+                const refactoredAvg = refactoredTimes.reduce((a, b) => a + b, 0) / iterations;
+                const ratio = refactoredAvg / originalAvg;
+                
+                const performanceLog = [
+                    `📊 性能测试结果 (${iterations} 次迭代):`,
+                    ``,
+                    `🟡 原版平均初始化时间: ${originalAvg.toFixed(2)}ms`,
+                    `🔵 重构版平均初始化时间: ${refactoredAvg.toFixed(2)}ms`,
+                    ``,
+                    `📈 性能比率: ${ratio.toFixed(2)}x`,
+                    `📊 性能影响: ${ratio > 1 ? '+' : ''}${((ratio - 1) * 100).toFixed(1)}%`,
+                    ``,
+                    `✅ 性能评估: ${ratio < 2 ? '性能影响在可接受范围内' : '⚠️ 性能有显著影响'}`,
+                ];
+                
+                results.innerHTML = performanceLog.map(log => `<div>${log}</div>`).join('');
+                
+                status.textContent = ratio < 2 ? '通过' : '需优化';
+                status.className = ratio < 2 ? 'test-status status-pass' : 'test-status status-fail';
+                
+                testResults.performance = ratio < 2;
+                
+            } catch (error) {
+                results.innerHTML = `<div>❌ 性能测试失败: ${error.message}</div>`;
+                status.textContent = '失败';
+                status.className = 'test-status status-fail';
+                testResults.performance = false;
+            }
+        }
+
+        // 页面加载完成后自动运行基础测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('🎮 重构版本浏览器测试页面已加载');
+                console.log('📋 可用测试功能:');
+                console.log('  - testBasicFunctionality(): 基础功能测试');
+                console.log('  - testCompatibility(): 兼容性对比测试');
+                console.log('  - testPerformance(): 性能对比测试');
+                console.log('  - startOriginalDemo(): 启动原版演示');
+                console.log('  - startRefactoredDemo(): 启动重构版演示');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

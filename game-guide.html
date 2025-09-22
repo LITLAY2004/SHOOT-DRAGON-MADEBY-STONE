@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐉 石龙猎者 - 游戏指南</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #4fd1c7;
+            box-shadow: 0 0 30px rgba(79, 209, 199, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #4fd1c7;
+            text-shadow: 0 0 10px rgba(79, 209, 199, 0.5);
+        }
+        h2 {
+            color: #4fd1c7;
+            border-bottom: 2px solid #4fd1c7;
+            padding-bottom: 10px;
+        }
+        .game-version {
+            background: rgba(79, 209, 199, 0.1);
+            border: 1px solid #4fd1c7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .recommended {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .play-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #4fd1c7, #38b2ac);
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+            transition: all 0.3s ease;
+        }
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 209, 199, 0.4);
+        }
+        .controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .feature-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 30px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.recommended {
+            background: #10b981;
+            color: white;
+        }
+        .status.working {
+            background: #3b82f6;
+            color: white;
+        }
+        .status.debug {
+            background: #f59e0b;
+            color: white;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐉 石龙猎者 - Stone Dragon Hunter</h1>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <p><strong>一款激动人心的自动射击BOSS战游戏</strong></p>
+            <p>面对不断成长的分段式石龙，在末日废土中生存下去！</p>
+        </div>
+
+        <h2>🎮 游戏版本选择</h2>
+        
+        <div class="game-version recommended">
+            <h3>🎯 简化版游戏 <span class="status recommended">推荐</span></h3>
+            <p>完全可用的游戏版本，包含所有核心功能，无兼容性问题。</p>
+            <div class="feature">
+                <span class="feature-icon">✅</span>
+                <span>完整的游戏玩法和机制</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🐲</span>
+                <span>分段式石龙BOSS，动态成长</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🔫</span>
+                <span>全自动瞄准射击系统</span>
+            </div>
+            <a href="example.html" class="play-btn">🚀 开始游戏</a>
+        </div>
+
+        <div class="game-version">
+            <h3>🚧 完整版游戏 <span class="status working">完整功能</span></h3>
+            <p>包含完整功能的原始版本，有升级系统和更多特效。</p>
+            <div class="feature">
+                <span class="feature-icon">🎁</span>
+                <span>永久升级系统</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">💰</span>
+                <span>肉鸽奖励机制</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🌟</span>
+                <span>更多视觉效果</span>
+            </div>
+            <a href="index.html" class="play-btn">🔥 体验完整版</a>
+        </div>
+
+        <div class="game-version">
+            <h3>🔧 调试版本 <span class="status debug">诊断工具</span></h3>
+            <p>用于诊断游戏问题的调试页面，包含详细的系统检测。</p>
+            <a href="debug.html" class="play-btn">🔍 系统诊断</a>
+        </div>
+
+        <h2>🕹️ 游戏操作</h2>
+        <div class="controls">
+            <div class="feature">
+                <span class="feature-icon">⌨️</span>
+                <span><strong>WASD / 方向键</strong> - 控制角色移动</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🎯</span>
+                <span><strong>自动射击</strong> - 游戏会自动瞄准最近的敌人</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⏸️</span>
+                <span><strong>P键</strong> - 暂停/继续游戏（完整版）</span>
+            </div>
+        </div>
+
+        <h2>🐲 游戏特色</h2>
+        <div class="feature">
+            <span class="feature-icon">🔥</span>
+            <span><strong>分段式BOSS战</strong> - 石龙会不断增加新的身体段，变得更强大</span>
+        </div>
+        <div class="feature">
+            <span class="feature-icon">⚡</span>
+            <span><strong>动态难度</strong> - 随着波次增加，敌人变得更加强大</span>
+        </div>
+        <div class="feature">
+            <span class="feature-icon">🎮</span>
+            <span><strong>流畅操作</strong> - 60FPS流畅游戏体验</span>
+        </div>
+        <div class="feature">
+            <span class="feature-icon">🏆</span>
+            <span><strong>分数挑战</strong> - 击败更多敌人获得更高分数</span>
+        </div>
+
+        <h2>🎯 游戏目标</h2>
+        <ul>
+            <li>🐲 击败不断成长的石龙BOSS</li>
+            <li>🏆 在每一波中获得最高分数</li>
+            <li>⏰ 生存更长时间，挑战更高波次</li>
+            <li>💪 收集道具提升角色能力（完整版）</li>
+        </ul>
+
+        <h2>💡 游戏技巧</h2>
+        <ul>
+            <li>🎯 优先攻击石龙的头部，头部被摧毁后身体段会分离</li>
+            <li>🏃 保持移动，避免被石龙段包围</li>
+            <li>⏰ 石龙会定期增加新段，要快速击败它们</li>
+            <li>🎁 收集掉落的道具提升战斗力（完整版）</li>
+        </ul>
+
+        <div class="footer">
+            <p>🌟 祝您游戏愉快！击败所有石龙，成为真正的石龙猎者！</p>
+            <p><small>技术支持：AI Assistant | 游戏引擎：HTML5 Canvas</small></p>
+        </div>
+    </div>
+
+    <script>
+        // 简单的页面交互效果
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎮 石龙猎者游戏指南页面已加载');
+            
+            // 为游戏按钮添加点击统计
+            document.querySelectorAll('.play-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const game = e.target.textContent.includes('简化') ? '简化版' : 
+                                e.target.textContent.includes('完整') ? '完整版' : '调试版';
+                    console.log('🎯 用户选择了:', game);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

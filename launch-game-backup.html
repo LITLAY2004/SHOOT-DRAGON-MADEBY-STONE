@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Cyber Tower Defense - 游戏启动中心</title>
+    <style>
+        :root {
+            --primary-cyan: #4fd1c7;
+            --primary-blue: #06b6d4;
+            --neon-purple: #8b5cf6;
+            --neon-pink: #ec4899;
+            --neon-orange: #f97316;
+            --dark-bg: #0a0a0a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-glow: rgba(79, 209, 199, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 动态背景 */
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(79, 209, 199, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79, 209, 199, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .main-title {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue), var(--neon-purple));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(79, 209, 199, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #94a3b8;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .status-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: #10b981; }
+        .status-ready { background: var(--primary-cyan); }
+        .status-active { background: var(--neon-orange); }
+
+        .game-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .mode-card {
+            background: var(--card-bg);
+            border: 2px solid rgba(79, 209, 199, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(15px);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(79, 209, 199, 0.1), transparent);
+            animation: rotate 6s linear infinite;
+            z-index: -1;
+        }
+
+        .mode-card:hover {
+            border-color: var(--primary-cyan);
+            box-shadow: 0 20px 40px rgba(79, 209, 199, 0.3);
+            transform: translateY(-10px) scale(1.02);
+        }
+
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            display: block;
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+
+        .mode-title {
+            font-size: 1.8rem;
+            color: var(--primary-cyan);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .mode-description {
+            color: #cbd5e1;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .mode-features {
+            list-style: none;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .mode-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .feature-check {
+            color: var(--primary-cyan);
+            font-weight: bold;
+        }
+
+        .launch-button {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue));
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .launch-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .launch-button:hover::before {
+            left: 100%;
+        }
+
+        .launch-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(79, 209, 199, 0.4);
+        }
+
+        .launch-button.secondary {
+            background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
+        }
+
+        .launch-button.testing {
+            background: linear-gradient(45deg, var(--neon-orange), #f59e0b);
+        }
+
+        .quick-access {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .quick-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(79, 209, 199, 0.3);
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--primary-cyan);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .quick-button:hover {
+            background: rgba(79, 209, 199, 0.1);
+            border-color: var(--primary-cyan);
+            transform: translateY(-2px);
+        }
+
+        .server-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideInRight 0.5s ease-out;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(79, 209, 199, 0.3);
+            border-top: 4px solid var(--primary-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+            
+            .game-modes {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="main-title">🚀 CYBER TOWER DEFENSE</h1>
+            <p class="subtitle">选择您的游戏体验模式</p>
+        </div>
+
+        <!-- 服务状态 -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot status-online"></div>
+                <span>🌐 HTTP服务器: 在线</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot status-ready"></div>
+                <span>🎮 游戏引擎: 就绪</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot status-active"></div>
+                <span>🧪 测试系统: 激活</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot status-online"></div>
+                <span>⚡ 所有功能: 可用</span>
+            </div>
+        </div>
+
+        <!-- 游戏模式选择 -->
+        <div class="game-modes">
+            <!-- 完整游戏体验 -->
+            <div class="mode-card">
+                <span class="mode-icon">🎮</span>
+                <h3 class="mode-title">完整游戏体验</h3>
+                <p class="mode-description">
+                    包含所有功能的完整版本，双模式游戏体验，科技风格界面
+                </p>
+                <ul class="mode-features">
+                    <li><span class="feature-check">✓</span> 闯关模式 + 无限模式</li>
+                    <li><span class="feature-check">✓</span> 6个主动技能 + 6个被动技能</li>
+                    <li><span class="feature-check">✓</span> 元素系统和升级机制</li>
+                    <li><span class="feature-check">✓</span> 现代科技UI界面</li>
+                    <li><span class="feature-check">✓</span> 粒子效果和动画</li>
+                </ul>
+                <button class="launch-button" onclick="launchFullGame()">
+                    🚀 启动完整游戏
+                </button>
+            </div>
+
+            <!-- 快速试玩 -->
+            <div class="mode-card">
+                <span class="mode-icon">⚡</span>
+                <h3 class="mode-title">快速试玩</h3>
+                <p class="mode-description">
+                    简化版游戏，快速上手，包含核心游戏机制
+                </p>
+                <ul class="mode-features">
+                    <li><span class="feature-check">✓</span> 核心游戏玩法</li>
+                    <li><span class="feature-check">✓</span> 6个技能系统</li>
+                    <li><span class="feature-check">✓</span> 流畅的游戏体验</li>
+                    <li><span class="feature-check">✓</span> 快速启动</li>
+                    <li><span class="feature-check">✓</span> 移动端友好</li>
+                </ul>
+                <button class="launch-button secondary" onclick="launchQuickPlay()">
+                    ⚡ 快速开始
+                </button>
+            </div>
+
+            <!-- 功能测试中心 -->
+            <div class="mode-card">
+                <span class="mode-icon">🧪</span>
+                <h3 class="mode-title">功能测试中心</h3>
+                <p class="mode-description">
+                    完整的测试套件，验证所有功能，查看详细报告
+                </p>
+                <ul class="mode-features">
+                    <li><span class="feature-check">✓</span> 单元测试验证</li>
+                    <li><span class="feature-check">✓</span> 性能测试报告</li>
+                    <li><span class="feature-check">✓</span> 兼容性检查</li>
+                    <li><span class="feature-check">✓</span> 实时测试结果</li>
+                    <li><span class="feature-check">✓</span> 详细错误诊断</li>
+                </ul>
+                <button class="launch-button testing" onclick="launchTestCenter()">
+                    🧪 打开测试中心
+                </button>
+            </div>
+        </div>
+
+        <!-- 快速访问链接 -->
+        <div class="quick-access">
+            <a href="tests/TestRunner.html" class="quick-button" target="_blank">
+                🧪 单元测试运行器
+            </a>
+            <a href="index.html" class="quick-button" target="_blank">
+                🏠 项目主页
+            </a>
+            <a href="game-guide.html" class="quick-button" target="_blank">
+                📖 游戏指南
+            </a>
+            <a href="docs/" class="quick-button" target="_blank">
+                📚 开发文档
+            </a>
+        </div>
+    </div>
+
+    <!-- 服务器信息 -->
+    <div class="server-info">
+        <div><strong>🌐 服务地址:</strong> localhost:8000</div>
+        <div><strong>📊 状态:</strong> <span style="color: #10b981;">运行中</span></div>
+    </div>
+
+    <!-- 加载遮罩 -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3 id="loadingText">正在启动游戏...</h3>
+            <p id="loadingSubtext">请稍候，系统正在初始化</p>
+        </div>
+    </div>
+
+    <script>
+        // 显示通知
+        function showNotification(message, duration = 3000) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.5s ease-out reverse';
+                setTimeout(() => notification.remove(), 500);
+            }, duration);
+        }
+
+        // 显示加载界面
+        function showLoading(text, subtext) {
+            const overlay = document.getElementById('loadingOverlay');
+            const textEl = document.getElementById('loadingText');
+            const subtextEl = document.getElementById('loadingSubtext');
+            
+            textEl.textContent = text;
+            subtextEl.textContent = subtext;
+            overlay.style.display = 'flex';
+        }
+
+        // 隐藏加载界面
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // 启动完整游戏
+        function launchFullGame() {
+            showLoading('🚀 启动完整游戏', '正在加载所有游戏系统...');
+            
+            setTimeout(() => {
+                window.open('game.html', '_blank');
+                hideLoading();
+                showNotification('🎮 完整游戏已在新窗口中启动！');
+            }, 2000);
+        }
+
+        // 启动快速试玩
+        function launchQuickPlay() {
+            showLoading('⚡ 启动快速试玩', '正在准备游戏环境...');
+            
+            setTimeout(() => {
+                window.open('play-game.html', '_blank');
+                hideLoading();
+                showNotification('🚀 快速试玩已启动，尽情享受吧！');
+            }, 1500);
+        }
+
+        // 启动测试中心
+        function launchTestCenter() {
+            showLoading('🧪 启动测试中心', '正在初始化测试框架...');
+            
+            setTimeout(() => {
+                window.open('complete-test.html', '_blank');
+                hideLoading();
+                showNotification('🧪 测试中心已启动，开始验证功能！');
+            }, 1800);
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 检查服务器状态
+            fetch('/game.html')
+                .then(response => {
+                    if (response.ok) {
+                        showNotification('🌐 所有服务已就绪，可以开始游戏！');
+                    }
+                })
+                .catch(() => {
+                    showNotification('⚠️ 服务器连接异常，请检查服务状态', 5000);
+                });
+
+            // 添加键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey) {
+                    switch(e.key) {
+                        case '1':
+                            e.preventDefault();
+                            launchFullGame();
+                            break;
+                        case '2':
+                            e.preventDefault();
+                            launchQuickPlay();
+                            break;
+                        case '3':
+                            e.preventDefault();
+                            launchTestCenter();
+                            break;
+                    }
+                }
+            });
+
+            console.log('🎮 Cyber Tower Defense 启动中心已加载');
+            console.log('💡 快捷键: Ctrl+1(完整游戏) Ctrl+2(快速试玩) Ctrl+3(测试中心)');
+        });
+
+        // 添加一些动态效果
+        setInterval(() => {
+            const statusDots = document.querySelectorAll('.status-dot');
+            statusDots.forEach(dot => {
+                dot.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    dot.style.transform = 'scale(1)';
+                }, 200);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

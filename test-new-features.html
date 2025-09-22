@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏模式系统测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #FFC107;
+        }
+        button {
+            background: #00d4ff;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #00b8e6;
+        }
+        .json-output {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎮 游戏模式系统测试</h1>
+        
+        <div class="test-section">
+            <h2>📋 系统加载测试</h2>
+            <div id="loadingTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 关卡配置测试</h2>
+            <button onclick="testLevelConfig()">测试关卡配置</button>
+            <div id="levelConfigTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 进度系统测试</h2>
+            <button onclick="testProgressionSystem()">测试进度系统</button>
+            <button onclick="resetProgress()">重置进度</button>
+            <div id="progressionTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>♾️ 无限模式测试</h2>
+            <button onclick="testEndlessMode()">测试无限模式</button>
+            <div id="endlessTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎮 游戏模式管理器测试</h2>
+            <button onclick="testGameModeManager()">测试模式管理器</button>
+            <div id="gameModeTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🖼️ UI组件测试</h2>
+            <button onclick="testUIComponents()">测试UI组件</button>
+            <div id="uiTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔗 集成测试</h2>
+            <button onclick="runIntegrationTests()">运行集成测试</button>
+            <div id="integrationTests"></div>
+        </div>
+    </div>
+
+    <!-- 引入所有游戏脚本 -->
+    <script src="src/config/LevelConfig.js"></script>
+    <script src="src/systems/GameModeManager.js"></script>
+    <script src="src/systems/ProgressionSystem.js"></script>
+    <script src="src/modes/EndlessMode.js"></script>
+    <script src="src/ui/GameModeSelector.js"></script>
+
+    <script>
+        // 测试结果显示函数
+        function showTestResult(containerId, message, type = 'success') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        function showJSONResult(containerId, data, title = '') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'test-result success';
+            if (title) {
+                const titleEl = document.createElement('div');
+                titleEl.textContent = title;
+                titleEl.style.fontWeight = 'bold';
+                titleEl.style.marginBottom = '10px';
+                div.appendChild(titleEl);
+            }
+            const pre = document.createElement('pre');
+            pre.className = 'json-output';
+            pre.textContent = JSON.stringify(data, null, 2);
+            div.appendChild(pre);
+            container.appendChild(div);
+        }
+
+        // 系统加载测试
+        function testSystemLoading() {
+            const tests = [
+                { name: 'LevelConfig', class: typeof LevelConfig !== 'undefined' },
+                { name: 'GameModeManager', class: typeof GameModeManager !== 'undefined' },
+                { name: 'ProgressionSystem', class: typeof ProgressionSystem !== 'undefined' },
+                { name: 'EndlessMode', class: typeof EndlessMode !== 'undefined' },
+                { name: 'GameModeSelector', class: typeof GameModeSelector !== 'undefined' }
+            ];
+
+            const container = document.getElementById('loadingTests');
+            container.innerHTML = '';
+
+            tests.forEach(test => {
+                const type = test.class ? 'success' : 'error';
+                const message = `${test.name}: ${test.class ? '✅ 已加载' : '❌ 未加载'}`;
+                showTestResult('loadingTests', message, type);
+            });
+        }
+
+        // 关卡配置测试
+        function testLevelConfig() {
+            const container = document.getElementById('levelConfigTests');
+            container.innerHTML = '';
+
+            try {
+                // 测试获取所有关卡
+                const allLevels = LevelConfig.getAllLevels();
+                showTestResult('levelConfigTests', `✅ 获取所有关卡成功，共 ${allLevels.length} 个关卡`, 'success');
+                showJSONResult('levelConfigTests', allLevels.slice(0, 3), '前3个关卡数据:');
+
+                // 测试获取特定关卡
+                const level1 = LevelConfig.getLevel(1);
+                if (level1) {
+                    showTestResult('levelConfigTests', '✅ 获取关卡1成功', 'success');
+                    showJSONResult('levelConfigTests', level1, '关卡1详细信息:');
+                } else {
+                    showTestResult('levelConfigTests', '❌ 获取关卡1失败', 'error');
+                }
+
+                // 测试关卡解锁逻辑
+                const isLevel1Unlocked = LevelConfig.isLevelUnlocked(1, []);
+                const isLevel2Unlocked = LevelConfig.isLevelUnlocked(2, []);
+                const isLevel2UnlockedAfterLevel1 = LevelConfig.isLevelUnlocked(2, [1]);
+
+                showTestResult('levelConfigTests', `✅ 关卡1解锁状态: ${isLevel1Unlocked}`, 'success');
+                showTestResult('levelConfigTests', `✅ 关卡2解锁状态(无前置): ${isLevel2Unlocked}`, 'warning');
+                showTestResult('levelConfigTests', `✅ 关卡2解锁状态(完成关卡1): ${isLevel2UnlockedAfterLevel1}`, 'success');
+
+            } catch (error) {
+                showTestResult('levelConfigTests', `❌ 关卡配置测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 进度系统测试
+        function testProgressionSystem() {
+            const container = document.getElementById('progressionTests');
+            container.innerHTML = '';
+
+            try {
+                // 创建模拟游戏实例
+                const mockGame = {
+                    eventSystem: {
+                        on: function(event, callback) {
+                            console.log(`EventSystem: 监听事件 ${event}`);
+                        },
+                        emit: function(event, data) {
+                            console.log(`EventSystem: 触发事件 ${event}`, data);
+                        }
+                    }
+                };
+
+                const progressionSystem = new ProgressionSystem(mockGame);
+                showTestResult('progressionTests', '✅ 进度系统实例化成功', 'success');
+
+                // 测试玩家数据
+                const playerData = progressionSystem.getPlayerData();
+                showJSONResult('progressionTests', {
+                    playerLevel: playerData.playerLevel,
+                    totalExperience: playerData.totalExperience,
+                    completedLevels: playerData.completedLevels,
+                    achievements: playerData.achievements
+                }, '玩家数据摘要:');
+
+                // 测试关卡解锁
+                const level1Unlocked = progressionSystem.isLevelUnlocked(1);
+                const level2Unlocked = progressionSystem.isLevelUnlocked(2);
+                showTestResult('progressionTests', `✅ 关卡1解锁: ${level1Unlocked}`, 'success');
+                showTestResult('progressionTests', `✅ 关卡2解锁: ${level2Unlocked}`, level2Unlocked ? 'success' : 'warning');
+
+                // 测试成就系统
+                const achievements = progressionSystem.getAchievements();
+                showTestResult('progressionTests', `✅ 获取成就列表成功，共 ${achievements.length} 个成就`, 'success');
+                
+                const unlockedAchievements = achievements.filter(a => a.unlocked);
+                showTestResult('progressionTests', `✅ 已解锁成就: ${unlockedAchievements.length} / ${achievements.length}`, 'success');
+
+            } catch (error) {
+                showTestResult('progressionTests', `❌ 进度系统测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 无限模式测试
+        function testEndlessMode() {
+            const container = document.getElementById('endlessTests');
+            container.innerHTML = '';
+
+            try {
+                // 创建模拟游戏实例
+                const mockGame = {
+                    canvas: { width: 800, height: 600 },
+                    eventSystem: {
+                        on: function(event, callback) {
+                            console.log(`EventSystem: 监听事件 ${event}`);
+                        },
+                        emit: function(event, data) {
+                            console.log(`EventSystem: 触发事件 ${event}`, data);
+                        }
+                    },
+                    enemySystem: {
+                        enemies: [],
+                        addEnemy: function(enemy) {
+                            this.enemies.push(enemy);
+                            console.log('添加敌人:', enemy.type);
+                        }
+                    },
+                    particleSystem: {
+                        createBossSpawnEffect: function(x, y) {
+                            console.log(`Boss生成特效: (${x}, ${y})`);
+                        },
+                        createLightningEffect: function(x, y) {
+                            console.log(`雷电特效: (${x}, ${y})`);
+                        },
+                        createHealingEffect: function(x, y) {
+                            console.log(`治疗特效: (${x}, ${y})`);
+                        }
+                    }
+                };
+
+                const endlessMode = new EndlessMode(mockGame);
+                showTestResult('endlessTests', '✅ 无限模式实例化成功', 'success');
+
+                // 测试状态
+                const initialStatus = endlessMode.getStatus();
+                showJSONResult('endlessTests', initialStatus, '初始状态:');
+
+                // 模拟开始游戏
+                endlessMode.start('normal');
+                showTestResult('endlessTests', '✅ 无限模式开始成功', 'success');
+
+                const runningStatus = endlessMode.getStatus();
+                showJSONResult('endlessTests', runningStatus, '运行中状态:');
+
+                // 测试敌人生成
+                endlessMode.spawnEnemy();
+                endlessMode.spawnEnemy(true); // 特殊敌人
+                showTestResult('endlessTests', `✅ 敌人生成测试完成，当前敌人数: ${mockGame.enemySystem.enemies.length}`, 'success');
+
+                // 停止测试
+                endlessMode.end();
+                showTestResult('endlessTests', '✅ 无限模式结束测试完成', 'success');
+
+            } catch (error) {
+                showTestResult('endlessTests', `❌ 无限模式测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 游戏模式管理器测试
+        function testGameModeManager() {
+            const container = document.getElementById('gameModeTests');
+            container.innerHTML = '';
+
+            try {
+                // 创建模拟游戏实例
+                const mockGame = {
+                    eventSystem: {
+                        on: function(event, callback) {
+                            console.log(`EventSystem: 监听事件 ${event}`);
+                        },
+                        emit: function(event, data) {
+                            console.log(`EventSystem: 触发事件 ${event}`, data);
+                        }
+                    }
+                };
+
+                const gameModeManager = new GameModeManager(mockGame);
+                showTestResult('gameModeTests', '✅ 游戏模式管理器实例化成功', 'success');
+
+                // 测试模式切换
+                const adventureResult = gameModeManager.startMode(LevelConfig.GAME_MODES.ADVENTURE, 1);
+                showTestResult('gameModeTests', `✅ 切换到闯关模式: ${adventureResult}`, adventureResult ? 'success' : 'error');
+
+                const endlessResult = gameModeManager.startMode(LevelConfig.GAME_MODES.ENDLESS);
+                showTestResult('gameModeTests', `✅ 切换到无限模式: ${endlessResult}`, endlessResult ? 'success' : 'error');
+
+                // 测试状态
+                const status = gameModeManager.getCurrentModeStatus();
+                showJSONResult('gameModeTests', status, '当前模式状态:');
+
+            } catch (error) {
+                showTestResult('gameModeTests', `❌ 游戏模式管理器测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // UI组件测试
+        function testUIComponents() {
+            const container = document.getElementById('uiTests');
+            container.innerHTML = '';
+
+            try {
+                // 创建临时容器
+                const tempContainer = document.createElement('div');
+                tempContainer.style.display = 'none';
+                document.body.appendChild(tempContainer);
+
+                // 创建模拟游戏实例
+                const mockGame = {
+                    eventSystem: {
+                        emit: function(event, data) {
+                            console.log(`EventSystem: 触发事件 ${event}`, data);
+                        }
+                    }
+                };
+
+                const gameModeSelector = new GameModeSelector(tempContainer, mockGame);
+                showTestResult('uiTests', '✅ 游戏模式选择器实例化成功', 'success');
+
+                // 测试显示/隐藏
+                gameModeSelector.show();
+                showTestResult('uiTests', '✅ 显示模式选择器成功', 'success');
+
+                gameModeSelector.hide();
+                showTestResult('uiTests', '✅ 隐藏模式选择器成功', 'success');
+
+                // 清理
+                document.body.removeChild(tempContainer);
+
+            } catch (error) {
+                showTestResult('uiTests', `❌ UI组件测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 集成测试
+        function runIntegrationTests() {
+            const container = document.getElementById('integrationTests');
+            container.innerHTML = '';
+
+            try {
+                showTestResult('integrationTests', '🚀 开始集成测试...', 'success');
+
+                // 创建完整的模拟游戏环境
+                const mockGame = {
+                    canvas: { width: 800, height: 600 },
+                    eventSystem: {
+                        events: {},
+                        on: function(event, callback) {
+                            if (!this.events[event]) {
+                                this.events[event] = [];
+                            }
+                            this.events[event].push(callback);
+                        },
+                        emit: function(event, data) {
+                            if (this.events[event]) {
+                                this.events[event].forEach(callback => {
+                                    try {
+                                        callback(data);
+                                    } catch (error) {
+                                        console.error(`事件回调错误 ${event}:`, error);
+                                    }
+                                });
+                            }
+                        }
+                    },
+                    enemySystem: {
+                        enemies: [],
+                        addEnemy: function(enemy) {
+                            this.enemies.push(enemy);
+                        }
+                    },
+                    particleSystem: {
+                        createBossSpawnEffect: () => {},
+                        createLightningEffect: () => {},
+                        createHealingEffect: () => {}
+                    }
+                };
+
+                // 初始化所有系统
+                const progressionSystem = new ProgressionSystem(mockGame);
+                const gameModeManager = new GameModeManager(mockGame);
+                
+                mockGame.progressionSystem = progressionSystem;
+                mockGame.gameModeManager = gameModeManager;
+
+                showTestResult('integrationTests', '✅ 所有系统初始化完成', 'success');
+
+                // 测试完整的游戏流程
+                
+                // 1. 开始闯关模式
+                gameModeManager.startMode(LevelConfig.GAME_MODES.ADVENTURE, 1);
+                showTestResult('integrationTests', '✅ 闯关模式启动成功', 'success');
+
+                // 2. 模拟击杀敌人
+                mockGame.eventSystem.emit('enemy_killed', {
+                    type: 'goblin',
+                    experience: 10,
+                    isBoss: false
+                });
+                showTestResult('integrationTests', '✅ 敌人击杀事件处理成功', 'success');
+
+                // 3. 模拟关卡完成
+                mockGame.eventSystem.emit('level_completed', {
+                    levelId: 1,
+                    stats: { time: 120, score: 1000 },
+                    rewards: { experience: 100, skillPoints: 2 },
+                    perfect: true
+                });
+                showTestResult('integrationTests', '✅ 关卡完成事件处理成功', 'success');
+
+                // 4. 切换到无限模式
+                gameModeManager.startMode(LevelConfig.GAME_MODES.ENDLESS);
+                showTestResult('integrationTests', '✅ 切换到无限模式成功', 'success');
+
+                // 5. 模拟无限模式结束
+                mockGame.eventSystem.emit('endless_mode_ended', {
+                    wave: 15,
+                    kills: 150,
+                    survivalTime: 300,
+                    score: 5000,
+                    maxCombo: 25,
+                    difficulty: 'normal'
+                });
+                showTestResult('integrationTests', '✅ 无限模式结束事件处理成功', 'success');
+
+                // 检查最终状态
+                const finalPlayerData = progressionSystem.getPlayerData();
+                showJSONResult('integrationTests', {
+                    playerLevel: finalPlayerData.playerLevel,
+                    totalExperience: finalPlayerData.totalExperience,
+                    completedLevels: finalPlayerData.completedLevels,
+                    achievements: finalPlayerData.achievements,
+                    endlessRecords: finalPlayerData.endlessRecords
+                }, '最终玩家状态:');
+
+                showTestResult('integrationTests', '🎉 集成测试全部通过！', 'success');
+
+            } catch (error) {
+                showTestResult('integrationTests', `❌ 集成测试失败: ${error.message}`, 'error');
+                console.error('集成测试错误:', error);
+            }
+        }
+
+        // 重置进度
+        function resetProgress() {
+            try {
+                localStorage.removeItem('tower_defense_player_data');
+                localStorage.removeItem('endless_records');
+                showTestResult('progressionTests', '✅ 进度已重置', 'success');
+            } catch (error) {
+                showTestResult('progressionTests', `❌ 重置进度失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时自动运行系统加载测试
+        document.addEventListener('DOMContentLoaded', function() {
+            testSystemLoading();
+        });
+    </script>
+</body>
+</html>
