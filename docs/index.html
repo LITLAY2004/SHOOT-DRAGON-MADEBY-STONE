@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 CYBER TOWER DEFENSE - 现代塔防游戏</title>
+    <meta name="description" content="一个功能丰富的HTML5塔防游戏，支持多种游戏模式、技能系统和永久升级">
+    <meta name="keywords" content="塔防游戏,HTML5游戏,JavaScript游戏,开源游戏">
+    
+    <!-- Open Graph 元数据 -->
+    <meta property="og:title" content="CYBER TOWER DEFENSE - 现代塔防游戏">
+    <meta property="og:description" content="体验最新的HTML5塔防游戏，包含多种模式、技能系统和永久升级">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="screenshots/gameplay.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .play-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #00d2ff;
+        }
+
+        .feature-description {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .screenshots {
+            margin: 60px 0;
+            text-align: center;
+        }
+
+        .screenshots h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #00d2ff;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .screenshot-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ecf0f1;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .stats {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #00d2ff;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+            
+            .play-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 250px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">🚀 CYBER TOWER DEFENSE</h1>
+            <p class="subtitle">欢迎来到科技塔防世界！使用WASD移动，数字键1-6释放技能，击败越来越大的敌人！</p>
+            
+            <div class="play-buttons">
+                <a href="../game.html" class="btn btn-primary">
+                    🎮 立即游戏
+                </a>
+                <a href="../game-status.html" class="btn btn-secondary">
+                    📊 游戏状态
+                </a>
+                <a href="https://github.com/username/tower-defense-game" class="btn btn-info" target="_blank">
+                    📦 GitHub源码
+                </a>
+            </div>
+        </header>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">多种游戏模式</h3>
+                <p class="feature-description">闯关模式、无限模式和生存模式，每种模式都有独特的挑战和奖励系统。</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">技能系统</h3>
+                <p class="feature-description">6种不同的技能：火龙、雷电、冰冻、时间扭曲、旋风和能量护盾，策略性使用技能是制胜关键。</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💎</div>
+                <h3 class="feature-title">永久升级</h3>
+                <p class="feature-description">使用灵魂货币进行永久性角色提升，包括伤害强化、生存强化和特殊能力解锁。</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎵</div>
+                <h3 class="feature-title">沉浸式体验</h3>
+                <p class="feature-description">完整的音效系统、粒子特效、动态背景音乐和响应式设计，带来极致游戏体验。</p>
+            </div>
+        </div>
+
+        <div class="screenshots">
+            <h2>📸 游戏截图</h2>
+            <p>体验精美的游戏界面和丰富的视觉效果</p>
+            
+            <div class="screenshot-grid">
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🏪 永久升级商店</div>
+                    <h4>升级商店</h4>
+                    <p>使用灵魂货币进行永久性提升</p>
+                </div>
+                
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🎮 游戏模式选择</div>
+                    <h4>模式选择</h4>
+                    <p>三种不同模式满足各类玩家</p>
+                </div>
+                
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">⚔️ 实时战斗</div>
+                    <h4>战斗界面</h4>
+                    <p>激烈的实时战斗和技能释放</p>
+                </div>
+                
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📊 游戏统计</div>
+                    <h4>统计数据</h4>
+                    <p>详细的战斗数据和成就系统</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <h2>🏆 游戏数据</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">游戏模式</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">技能种类</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">60</div>
+                    <div class="stat-label">FPS流畅体验</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">开源免费</div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <h3>🤝 参与贡献</h3>
+            <p>这是一个开源项目，欢迎任何形式的贡献和反馈！</p>
+            
+            <div class="social-links">
+                <a href="https://github.com/username/tower-defense-game" target="_blank">📦 GitHub</a>
+                <a href="https://github.com/username/tower-defense-game/issues" target="_blank">🐛 报告问题</a>
+                <a href="https://github.com/username/tower-defense-game/wiki" target="_blank">📚 文档</a>
+            </div>
+            
+            <p style="margin-top: 30px; opacity: 0.7;">
+                © 2024 Tower Defense Game. 基于 MIT 许可证开源
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // 简单的页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.feature-card, .screenshot-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            cards.forEach((card) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+        });
+
+        // 统计数字动画
+        function animateNumbers() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            
+            statNumbers.forEach((number) => {
+                const target = parseInt(number.textContent);
+                let current = 0;
+                const increment = target / 30;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    
+                    if (number.textContent.includes('%')) {
+                        number.textContent = Math.floor(current) + '%';
+                    } else {
+                        number.textContent = Math.floor(current);
+                    }
+                }, 50);
+            });
+        }
+
+        // 页面加载完成后启动动画
+        window.addEventListener('load', () => {
+            setTimeout(animateNumbers, 1000);
+        });
+    </script>
+</body>
+</html>
