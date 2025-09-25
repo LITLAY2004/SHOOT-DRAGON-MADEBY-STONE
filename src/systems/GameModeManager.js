@@ -114,6 +114,11 @@ class GameModeManager {
             }
         }
         
+        // 确保游戏主循环启动（防止黑屏）
+        if (this.game && typeof this.game.startGame === 'function' && !this.game.gameStarted) {
+            try { this.game.startGame(); } catch (e) { /* 忽略 */ }
+        }
+
         console.log(`开始关卡: ${levelConfig.name}`);
         return true;
     }
@@ -177,6 +182,11 @@ class GameModeManager {
             } catch (e) {}
         }
         
+        // 确保游戏主循环启动（防止黑屏）
+        if (this.game && typeof this.game.startGame === 'function' && !this.game.gameStarted) {
+            try { this.game.startGame(); } catch (e) { /* 忽略 */ }
+        }
+
         return true;
     }
 
@@ -230,11 +240,39 @@ class GameModeManager {
             this.game.backgroundEffects.setTheme(env.backgroundTheme);
         }
         
-        // 设置环境效果
-        if (env.ambientEffects && this.game.particleSystem) {
-            env.ambientEffects.forEach(effect => {
-                this.game.particleSystem.addAmbientEffect(effect);
-            });
+        // 设置环境效果 - 安全调用粒子系统
+        if (env.ambientEffects) {
+            console.log('🌟 尝试设置环境效果:', env.ambientEffects);
+            console.log('🔍 ParticleSystem可用:', !!this.game.particleSystem);
+            
+            if (this.game.particleSystem) {
+                // 检查可用的粒子系统方法
+                console.log('🔍 可用的粒子方法:', Object.getOwnPropertyNames(this.game.particleSystem.constructor.prototype));
+                
+                env.ambientEffects.forEach((effect, index) => {
+                    try {
+                        // 检查多种可能的方法名
+                        if (typeof this.game.particleSystem.createParticle === 'function') {
+                            const x = Math.random() * (this.game.canvas?.width || 800);
+                            const y = Math.random() * (this.game.canvas?.height || 600);
+                            this.game.particleSystem.createParticle(x, y, effect.type || 'glow', effect.color || 'cyan');
+                            console.log(`✅ 创建环境效果 ${index + 1}: ${effect.type}`);
+                        } else if (typeof this.game.particleSystem.addParticle === 'function') {
+                            // 尝试其他可能的方法名
+                            const x = Math.random() * (this.game.canvas?.width || 800);
+                            const y = Math.random() * (this.game.canvas?.height || 600);
+                            this.game.particleSystem.addParticle(x, y, effect.type || 'glow', effect.color || 'cyan');
+                            console.log(`✅ 创建环境效果 ${index + 1}: ${effect.type} (使用addParticle)`);
+                        } else {
+                            console.warn(`⚠️ 跳过环境效果 ${index + 1}: 粒子系统方法不可用`, effect);
+                        }
+                    } catch (error) {
+                        console.warn(`⚠️ 创建环境效果失败 ${index + 1}:`, error, effect);
+                    }
+                });
+            } else {
+                console.warn('⚠️ ParticleSystem不可用，跳过所有环境效果');
+            }
         }
         
         // 设置音乐（如果有音频系统）
@@ -286,16 +324,39 @@ class GameModeManager {
         }
         
         // 启动波次缩放系统
-        this.startEndlessScaling();
+        try {
+            this.startEndlessScaling();
+        } catch (error) {
+            console.warn('⚠️ 启动无限模式缩放系统失败:', error);
+        }
     }
 
     /**
      * 启动无限模式缩放系统
      */
     startEndlessScaling() {
-        this.game.eventSystem.on('wave_complete', (waveNumber) => {
-            this.scaleEndlessMode(waveNumber);
-        });
+        console.log('🔄 尝试启动无限模式缩放系统...');
+        console.log('🔍 Game对象:', !!this.game);
+        console.log('🔍 EventSystem:', !!this.game?.eventSystem);
+        console.log('🔍 EventSystem.on方法:', typeof this.game?.eventSystem?.on);
+        
+        // 确保事件系统存在
+        if (this.game && this.game.eventSystem && typeof this.game.eventSystem.on === 'function') {
+            console.log('✅ EventSystem可用，设置波次完成监听器');
+            this.game.eventSystem.on('wave_complete', (waveNumber) => {
+                this.scaleEndlessMode(waveNumber);
+            });
+        } else {
+            console.warn('⚠️ EventSystem 不可用，使用备用方案');
+            
+            // 创建一个简单的回调机制作为备用方案
+            if (this.game) {
+                console.log('📝 设置备用缩放回调机制');
+                this.game._endlessScaleCallback = (waveNumber) => {
+                    this.scaleEndlessMode(waveNumber);
+                };
+            }
+        }
     }
 
     /**
@@ -667,11 +728,33 @@ class GameModeManager {
      * 加载进度
      */
     loadProgress() {
-        if (typeof localStorage !== 'undefined') {
-            const saved = localStorage.getItem('tower_defense_progress');
-            return saved ? JSON.parse(saved) : [];
+        if (typeof localStorage === 'undefined') {
+            return [];
         }
-        return [];
+
+        try {
+            const saved = localStorage.getItem('tower_defense_progress');
+            if (!saved || typeof saved !== 'string') {
+                return [];
+            }
+
+            // 简单损坏检测
+            if (saved.includes('invalid') || saved.includes('Unexpected token')) {
+                console.warn('🗑️ 检测到损坏的 tower_defense_progress，已清理');
+                localStorage.removeItem('tower_defense_progress');
+                return [];
+            }
+
+            const parsed = JSON.parse(saved);
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            return parsed;
+        } catch (e) {
+            console.warn('⚠️ 读取 tower_defense_progress 失败，已清理并回退默认:', e?.message || e);
+            try { localStorage.removeItem('tower_defense_progress'); } catch {}
+            return [];
+        }
     }
 
     /**

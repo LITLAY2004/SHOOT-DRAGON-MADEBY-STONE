@@ -190,8 +190,8 @@ class GameModeSelector {
                 font-size: 3rem;
                 font-weight: 700;
                 background: linear-gradient(45deg, #00d4ff, #ff00d4);
-                background-clip: text;
                 -webkit-background-clip: text;
+                background-clip: text;
                 color: transparent;
                 -webkit-text-fill-color: transparent;
                 margin-bottom: 1rem;

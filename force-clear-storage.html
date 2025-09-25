@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚨 强制清理存档 - Emergency Storage Cleaner</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background: #ff1a1a; 
+            color: #fff;
+            text-align: center;
+        }
+        .container { background: #cc0000; padding: 30px; border-radius: 10px; border: 3px solid #fff; }
+        button { 
+            background: #fff; 
+            color: #cc0000; 
+            border: none; 
+            padding: 20px 40px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 18px; 
+            font-weight: bold;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        button:hover { background: #f0f0f0; transform: scale(1.05); }
+        .result { margin: 20px 0; padding: 15px; background: #990000; border-radius: 5px; }
+        .success { background: #006600 !important; }
+        h1 { font-size: 2em; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .warning { font-size: 1.1em; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 紧急存档清理工具</h1>
+        
+        <div class="warning">
+            ⚠️ 如果您遇到持续的JSON错误，请使用此工具强制清理所有损坏的数据
+        </div>
+        
+        <button onclick="emergencyClean()" style="font-size: 20px; padding: 25px 50px;">
+            🧹 立即清理所有存档数据
+        </button>
+        
+        <button onclick="checkAndClean()">
+            🔍 检查并清理
+        </button>
+        
+        <button onclick="goBack()">
+            🎮 返回游戏
+        </button>
+        
+        <div id="result"></div>
+        
+        <div class="warning" style="margin-top: 30px; font-size: 0.9em;">
+            这将清理：towerDefenseProgress, towerDefenseSettings, towerDefenseAchievements, towerDefenseStats
+        </div>
+    </div>
+
+    <script>
+        function log(message, isSuccess = false) {
+            const result = document.getElementById('result');
+            const div = document.createElement('div');
+            div.innerHTML = message;
+            div.className = 'result' + (isSuccess ? ' success' : '');
+            result.appendChild(div);
+            
+            // 滚动到底部
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function emergencyClean() {
+            log('🚨 开始紧急清理程序...');
+            
+            const keys = [
+                'towerDefenseProgress',
+                'towerDefenseSettings', 
+                'towerDefenseAchievements',
+                'towerDefenseStats',
+                'towerDefenseTemp',
+                'gameState',
+                'playerData'
+            ];
+            
+            let cleaned = 0;
+            keys.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    cleaned++;
+                    log(`✅ 已清理: ${key}`, true);
+                } else {
+                    log(`ℹ️ 未找到: ${key}`);
+                }
+            });
+            
+            // 清理所有以 tower 开头的键
+            const allKeys = Object.keys(localStorage);
+            allKeys.forEach(key => {
+                if (key.toLowerCase().includes('tower') || key.toLowerCase().includes('defense')) {
+                    localStorage.removeItem(key);
+                    cleaned++;
+                    log(`✅ 额外清理: ${key}`, true);
+                }
+            });
+            
+            log(`🧹 紧急清理完成！共清理 ${cleaned} 项数据`, true);
+            log('📝 建议现在刷新游戏页面', true);
+            
+            // 3秒后自动跳转
+            setTimeout(() => {
+                if (confirm('清理完成！是否立即返回游戏？')) {
+                    goBack();
+                }
+            }, 3000);
+        }
+
+        function checkAndClean() {
+            log('🔍 检查存档状态...');
+            
+            const progress = localStorage.getItem('towerDefenseProgress');
+            if (progress) {
+                log('📄 找到进度存档，长度: ' + progress.length);
+                log('📄 前100字符: ' + progress.substring(0, 100));
+                
+                const corruptedPatterns = ['invalid', 'json}', 'Unexpected token'];
+                let isCorrupted = false;
+                
+                corruptedPatterns.forEach(pattern => {
+                    if (progress.includes(pattern)) {
+                        log(`⚠️ 检测到损坏模式: "${pattern}"`, false);
+                        isCorrupted = true;
+                    }
+                });
+                
+                if (isCorrupted) {
+                    log('🗑️ 存档已损坏，自动清理...', false);
+                    emergencyClean();
+                } else {
+                    try {
+                        JSON.parse(progress);
+                        log('✅ 存档格式正常', true);
+                    } catch (error) {
+                        log('❌ JSON解析失败: ' + error.message, false);
+                        log('🗑️ 开始自动清理...', false);
+                        emergencyClean();
+                    }
+                }
+            } else {
+                log('ℹ️ 没有找到进度存档');
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'game.html';
+        }
+
+        // 页面加载时自动检查
+        window.onload = () => {
+            log('🔧 紧急清理工具已就绪');
+            checkAndClean();
+        };
+    </script>
+</body>
+</html>

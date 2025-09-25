@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 Cyber Tower Defense - 科技塔防</title>
+    <title>🚀 SHOOTING THE DRAGON - 科技塔防</title>
     
     <!-- 引入科技风格主题 -->
     <link rel="stylesheet" href="styles/cyber-theme.css">
@@ -1015,7 +1015,7 @@
         <header class="game-header">
             <div class="game-title">
                 <span>🚀</span>
-                <span>CYBER TOWER DEFENSE</span>
+                <span>SHOOTING THE DRAGON</span>
             </div>
             <div class="game-stats">
                 <div class="stat-display">
@@ -1195,7 +1195,7 @@
     
     <!-- 加载屏幕 -->
     <div id="loadingScreen" class="game-menu">
-        <h1 class="menu-title">CYBER TOWER DEFENSE</h1>
+        <h1 class="menu-title">SHOOTING THE DRAGON</h1>
         <div class="loading-container">
             <div class="loading-spinner"></div>
             <p id="loadingText">正在初始化系统...</p>
@@ -1212,7 +1212,7 @@
 
     <!-- 游戏菜单 -->
     <div id="gameMenu" class="game-menu hidden">
-        <h1 class="menu-title">CYBER TOWER DEFENSE</h1>
+        <h1 class="menu-title">SHOOTING THE DRAGON</h1>
         <p class="menu-description">
             欢迎来到科技塔防世界！使用WASD移动，数字键1-6释放技能，击败越来越强大的敌人！
         </p>
@@ -1337,6 +1337,7 @@
     <script src="src/config/BalanceConfig.js"></script>
     <script src="src/config/ElementConfig.js"></script>
     <script src="src/systems/SkillSystem.js"></script>
+    <script src="src/ui/PopupExit.js"></script>
     <script src="src/game.js"></script>
     
     <script>
@@ -1479,7 +1480,7 @@
                     // 启动UI更新循环
                     setInterval(updateGameUI, 100);
                     
-                    showNotification('🚀 Cyber Tower Defense 启动成功！', 'success');
+                    showNotification('🚀 SHOOTING THE DRAGON 启动成功！', 'success');
                 } else {
                     throw new Error('游戏类未加载');
                 }
@@ -2125,7 +2126,7 @@
         
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Cyber Tower Defense 已加载');
+            console.log('🚀 SHOOTING THE DRAGON 已加载');
             
             // 开始加载过程
             simulateLoading();
@@ -2150,5 +2151,6 @@
             }
         });
     </script>
+    <div class="producer-credit" style="text-align: center; margin: 10px 0; opacity: 0.8;">制作人：ASCETIC MONK</div>
 </body>
 </html>

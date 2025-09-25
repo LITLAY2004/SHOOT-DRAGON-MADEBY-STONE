@@ -16,7 +16,8 @@ class ParticleSystem {
             glow: { life: 2000, size: 4, speed: 1 },
             energy: { life: 1500, size: 3, speed: 2 },
             explosion: { life: 800, size: 6, speed: 5 },
-            trail: { life: 500, size: 1, speed: 4 }
+            trail: { life: 500, size: 1, speed: 4 },
+            star: { life: 900, size: 3, speed: 3 }
         };
         
         // 颜色主题
@@ -29,6 +30,29 @@ class ParticleSystem {
             orange: '#ff9500',
             white: '#ffffff'
         };
+
+        // 兼容性别名：确保旧代码可用
+        // 有些调用方可能使用 addParticle 或 addAmbientEffect
+        // 这里将其安全映射到 createParticle 或环境创建函数
+        if (typeof this.addParticle !== 'function') {
+            this.addParticle = (x, y, type = 'spark', color = 'cyan', options = {}) => {
+                return this.createParticle(x, y, type, color, options);
+            };
+        }
+
+        if (typeof this.addAmbientEffect !== 'function') {
+            this.addAmbientEffect = (effect = { type: 'glow', color: 'cyan' }) => {
+                const x = Math.random() * (this.canvas?.width || 800);
+                const y = Math.random() * (this.canvas?.height || 600);
+                return this.createParticle(x, y, effect.type || 'glow', effect.color || 'cyan', {
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: 1 + Math.random(),
+                    life: 4000 + Math.random() * 3000,
+                    alpha: 0.35
+                });
+            };
+        }
     }
     
     /**
@@ -410,6 +434,9 @@ class ParticleSystem {
                 case 'shockwave':
                     this.renderShockwave(particle);
                     break;
+                case 'star':
+                    this.renderStar(particle);
+                    break;
                 default:
                     this.renderDefault(particle);
             }
@@ -508,6 +535,40 @@ class ParticleSystem {
     }
     
     /**
+     * 渲染星形粒子
+     */
+    renderStar(particle) {
+        const spikes = 5;
+        const outer = particle.size * 1.6;
+        const inner = particle.size * 0.7;
+        let rot = Math.PI / 2 * 3;
+        let x = 0;
+        let y = 0;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, -outer);
+        for (let i = 0; i < spikes; i++) {
+            x = Math.cos(rot) * outer;
+            y = Math.sin(rot) * outer;
+            this.ctx.lineTo(x, y);
+            rot += Math.PI / spikes;
+            x = Math.cos(rot) * inner;
+            y = Math.sin(rot) * inner;
+            this.ctx.lineTo(x, y);
+            rot += Math.PI / spikes;
+        }
+        this.ctx.lineTo(0, -outer);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // 中心高光
+        this.ctx.globalAlpha *= 0.7;
+        this.ctx.fillStyle = 'white';
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, Math.max(1, particle.size * 0.5), 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+    
+    /**
      * 清除所有粒子
      */
     clear() {
@@ -587,6 +648,68 @@ class ParticleSystem {
         this.ctx.beginPath();
         this.ctx.arc(0, 0, particle.size * 0.6, 0, Math.PI * 2);
         this.ctx.fill();
+    }
+
+    /**
+     * 蛇形（分段敌人）专用：环绕光晕
+     * 轻量持续产生少量发光粒子，形成柔和呼吸感
+     */
+    createSerpentAura(x, y, color = '#66ccff', intensity = 0.5) {
+        const spawnCount = 2 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < spawnCount; i++) {
+            const radius = 8 + Math.random() * 6;
+            this.createParticle(x + (Math.random() - 0.5) * 6, y + (Math.random() - 0.5) * 6, 'glow', color, {
+                size: radius,
+                life: 900 + Math.random() * 600,
+                alpha: 0.35 + Math.random() * 0.25
+            });
+        }
+    }
+
+    /**
+     * 蛇形（分段敌人）专用：移动拖尾
+     * 可选 angle 方向用于将拖尾与移动方向对齐
+     */
+    createSerpentTrail(x, y, color = '#ffffff', angle = null) {
+        const noise = () => (Math.random() - 0.5) * 1.2;
+        const speed = 2 + Math.random() * 1.5;
+        const vx = angle == null ? noise() : Math.cos(angle + Math.PI) * speed + noise();
+        const vy = angle == null ? noise() : Math.sin(angle + Math.PI) * speed + noise();
+        this.createParticle(x, y, 'trail', color, {
+            vx: vx,
+            vy: vy,
+            size: 2 + Math.random() * 2,
+            life: 450 + Math.random() * 250,
+            alpha: 0.8
+        });
+    }
+
+    /**
+     * 蛇头转向时的闪耀爆发
+     */
+    createSparkleBurst(x, y, color = '#ff66ff', intensity = 1.0) {
+        const stars = Math.floor(4 * intensity) + 3;
+        for (let i = 0; i < stars; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1.5 + Math.random() * 2.5;
+            this.createParticle(x, y, 'star', color, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: 2 + Math.random() * 2,
+                life: 650 + Math.random() * 400,
+                alpha: 0.9
+            });
+        }
+        // 少量白色火花点缀
+        for (let i = 0; i < Math.floor(6 * intensity); i++) {
+            this.createParticle(x, y, 'spark', 'white', {
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                size: 1.5 + Math.random() * 1.5,
+                life: 500 + Math.random() * 300,
+                alpha: 0.8
+            });
+        }
     }
 }
 

@@ -70,6 +70,13 @@ class DragonHunterGame {
         this.damageNumbers = [];
         this.particles = [];
         
+        // 粒子系统：浏览器环境优先初始化（测试环境下安全跳过）
+        if (typeof ParticleSystem !== 'undefined' && this.canvas && !this.particleSystem) {
+            try {
+                this.particleSystem = new ParticleSystem(this.canvas);
+            } catch (e) {}
+        }
+        
         // 多元素龙配置系统
         this.dragonElements = {
             stone: {
@@ -374,6 +381,11 @@ class DragonHunterGame {
         this.updateLoot(deltaTime);
         this.updateEffects(deltaTime);
         
+        // 更新粒子系统（将秒转为毫秒供粒子寿命使用）
+        if (this.particleSystem) {
+            this.particleSystem.update(deltaTime * 1000);
+        }
+        
         // 更新技能系统
         if (this.skillSystem) {
             this.skillSystem.update(deltaTime);
@@ -425,7 +437,7 @@ class DragonHunterGame {
         // 更新龙技能系统
         this.updateDragonSkills(deltaTime);
         
-        // 更新石龙每个段的位置
+        // 更新石龙每个段的位置，并触发蛇形特效
         this.stoneDragon.segments.forEach((segment, index) => {
             if (index === 0) {
                 // 头部跟随玩家
@@ -443,6 +455,25 @@ class DragonHunterGame {
                     segment.x += (dx / distance) * this.stoneDragon.speed * deltaTime * speedMultiplier;
                     segment.y += (dy / distance) * this.stoneDragon.speed * deltaTime * speedMultiplier;
                 }
+
+                // 头部拖尾（随移动方向）与环绕光晕
+                if (this.particleSystem) {
+                    const headAngle = Math.atan2(dy, dx);
+                    if (Math.random() < 0.75) {
+                        this.particleSystem.createSerpentTrail(segment.x, segment.y, this.stoneDragon.element?.glowColor || '#ffffff', headAngle);
+                    }
+                    if (Math.random() < 0.12) {
+                        this.particleSystem.createSerpentAura(segment.x, segment.y, this.stoneDragon.element?.glowColor || '#66ccff', 0.6);
+                    }
+                    // 大幅转向时触发星形闪耀（酷炫）
+                    const prevAngle = this.stoneDragon.headAnim.prevAngle || headAngle;
+                    let deltaAngle = Math.abs(headAngle - prevAngle);
+                    if (deltaAngle > Math.PI) deltaAngle = Math.abs(deltaAngle - Math.PI * 2);
+                    if (deltaAngle > 0.6) {
+                        this.particleSystem.createSparkleBurst(segment.x, segment.y, this.stoneDragon.element?.glowColor || '#ff66ff', Math.min(1.5, deltaAngle));
+                    }
+                    this.stoneDragon.headAnim.prevAngle = headAngle;
+                }
             } else {
                 // 身体段跟随前一段
                 const prevSegment = this.stoneDragon.segments[index - 1];
@@ -455,6 +486,17 @@ class DragonHunterGame {
                     segment.x += dx * moveRatio * 0.8;
                     segment.y += dy * moveRatio * 0.8;
                 }
+
+                // 身体段偶发拖尾与轻量光晕（降低频率，避免过量）
+                if (this.particleSystem) {
+                    const bodyAngle = Math.atan2(dy, dx);
+                    if (index % 3 === 0 && Math.random() < 0.25) {
+                        this.particleSystem.createSerpentTrail(segment.x, segment.y, this.stoneDragon.element?.glowColor || '#ffffff', bodyAngle);
+                    }
+                    if (index % 5 === 0 && Math.random() < 0.08) {
+                        this.particleSystem.createSerpentAura(segment.x, segment.y, this.stoneDragon.element?.glowColor || '#66ccff', 0.5);
+                    }
+                }
             }
             
             // 攻击冷却
@@ -462,6 +504,32 @@ class DragonHunterGame {
                 segment.attackCooldown -= deltaTime;
             }
         });
+
+        // 更新蛇头动画状态（眨眼/吐舌）
+        if (this.stoneDragon.headAnim) {
+            const anim = this.stoneDragon.headAnim;
+            // 眨眼
+            anim.eyeBlinkTimer += deltaTime;
+            if (!anim.isBlinking && anim.eyeBlinkTimer >= anim.eyeBlinkInterval) {
+                anim.isBlinking = true;
+                anim.eyeBlinkTimer = 0;
+                anim.eyeBlinkInterval = 2.2 + Math.random() * 2.2;
+            } else if (anim.isBlinking && anim.eyeBlinkTimer >= anim.blinkDuration) {
+                anim.isBlinking = false;
+                anim.eyeBlinkTimer = 0;
+            }
+
+            // 吐舌
+            anim.tongueTimer += deltaTime;
+            if (!anim.isTongueOut && anim.tongueTimer >= anim.tongueInterval) {
+                anim.isTongueOut = true;
+                anim.tongueTimer = 0;
+                anim.tongueInterval = 3.0 + Math.random() * 3.0;
+            } else if (anim.isTongueOut && anim.tongueTimer >= anim.tongueOutTime) {
+                anim.isTongueOut = false;
+                anim.tongueTimer = 0;
+            }
+        }
     }
 
     // 更新元素特殊能力
@@ -782,6 +850,18 @@ class DragonHunterGame {
             totalSegments: 1,
             specialAbilityTimer: 0, // 特殊能力计时器
             phaseInvulnerable: false, // 暗龙的阶段性无敌状态
+            // 卡通蛇头动画状态
+            headAnim: {
+                prevAngle: 0,
+                eyeBlinkTimer: 0,
+                eyeBlinkInterval: 2.5 + Math.random() * 2.0, // 随机眨眼间隔（秒）
+                isBlinking: false,
+                blinkDuration: 0.12, // 秒
+                tongueTimer: 0,
+                tongueInterval: 3.5 + Math.random() * 3.0, // 偶尔吐舌
+                tongueOutTime: 0.25, // 吐舌时长（秒）
+                isTongueOut: false
+            },
             
             // 龙技能系统
             skills: {
@@ -1824,6 +1904,11 @@ class DragonHunterGame {
         this.renderPlayer();
         this.renderBullets();
         this.renderStoneDragon();
+        
+        // 粒子渲染
+        if (this.particleSystem) {
+            this.particleSystem.render();
+        }
         this.renderLoot();
         this.renderEffects();
         
@@ -1866,9 +1951,12 @@ class DragonHunterGame {
             // 元素特效和光晕
             if (element.type !== 'stone') {
                 // 绘制外层光晕
-                const glowRadius = this.dragonConfig.segmentSize + 8;
+                const baseRadius = this.dragonConfig.segmentSize;
+                const tailFactor = Math.max(0.6, 1 - Math.min(index, 20) * 0.03);
+                const radius = Math.max(8, Math.floor(baseRadius * tailFactor));
+                const glowRadius = radius + 8;
                 const gradient = this.ctx.createRadialGradient(
-                    segment.x, segment.y, this.dragonConfig.segmentSize,
+                    segment.x, segment.y, radius,
                     segment.x, segment.y, glowRadius
                 );
                 gradient.addColorStop(0, element.glowColor + '40');
@@ -1886,6 +1974,9 @@ class DragonHunterGame {
             // 渲染龙身段（根据元素调整颜色）
             const isHead = index === 0;
             let segmentColor = element.color;
+            const baseRadius = this.dragonConfig.segmentSize;
+            const tailFactorBody = Math.max(0.6, 1 - Math.min(index, 20) * 0.03);
+            const radius = Math.max(8, Math.floor(baseRadius * tailFactorBody));
             
             // 头部稍微亮一些
             if (isHead) {
@@ -1898,19 +1989,130 @@ class DragonHunterGame {
                 this.ctx.globalAlpha = 0.5;
             }
             
-            this.ctx.fillStyle = segmentColor;
+            // 计算朝向
+            let angle = 0;
+            if (isHead) {
+                angle = Math.atan2(this.player.y - segment.y, this.player.x - segment.x);
+            } else {
+                const prev = this.stoneDragon.segments[index - 1];
+                angle = Math.atan2(prev.y - segment.y, prev.x - segment.x);
+            }
+
+            // 渐变填充
+            const grad = this.ctx.createRadialGradient(
+                segment.x + Math.cos(angle) * radius * 0.2,
+                segment.y + Math.sin(angle) * radius * 0.2,
+                Math.max(1, radius * 0.1),
+                segment.x, segment.y, radius
+            );
+            grad.addColorStop(0, this.adjustBrightness(segmentColor, 1.25));
+            grad.addColorStop(1, segmentColor);
+            this.ctx.fillStyle = grad;
             this.ctx.beginPath();
-            this.ctx.arc(segment.x, segment.y, this.dragonConfig.segmentSize, 0, Math.PI * 2);
+            this.ctx.arc(segment.x, segment.y, radius, 0, Math.PI * 2);
             this.ctx.fill();
+
+            // 外轮廓描边
+            this.ctx.strokeStyle = element.glowColor;
+            this.ctx.lineWidth = 2;
+            this.ctx.globalAlpha = 0.9;
+            this.ctx.beginPath();
+            this.ctx.arc(segment.x, segment.y, radius, 0, Math.PI * 2);
+            this.ctx.stroke();
             
             this.ctx.globalAlpha = 1.0; // 重置透明度
             
-            // 渲染血量条
+            // 头部细节（卡通大眼、眨眼、分叉舌、霓虹描边）
+            if (isHead) {
+                const px = -Math.sin(angle);
+                const py = Math.cos(angle);
+                const eyeForward = radius * 0.38;
+                const eyeSide = radius * 0.26;
+                const eyeRx = Math.max(2, Math.floor(radius * 0.22)); // 椭圆X半径（更卡通）
+                const eyeRy = Math.max(2, Math.floor(radius * 0.16)); // 椭圆Y半径
+                const pupilR = Math.max(1, Math.floor(Math.min(eyeRx, eyeRy) * 0.5));
+                const ex = segment.x + Math.cos(angle) * eyeForward;
+                const ey = segment.y + Math.sin(angle) * eyeForward;
+                const leftX = ex + px * eyeSide;
+                const leftY = ey + py * eyeSide;
+                const rightX = ex - px * eyeSide;
+                const rightY = ey - py * eyeSide;
+                const isBlink = !!(this.stoneDragon.headAnim && this.stoneDragon.headAnim.isBlinking);
+
+                // 霓虹眼眶描边
+                this.ctx.strokeStyle = element.glowColor;
+                this.ctx.lineWidth = Math.max(1.5, radius * 0.08);
+                this.ctx.shadowColor = element.glowColor;
+                this.ctx.shadowBlur = Math.max(4, radius * 0.6);
+
+                // 左眼（椭圆/眨眼变扁）
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.ellipse(leftX, leftY, eyeRx, isBlink ? Math.max(1, eyeRy * 0.15) : eyeRy, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.stroke();
+                if (!isBlink) {
+                    this.ctx.fillStyle = '#111111';
+                    this.ctx.beginPath();
+                    this.ctx.arc(leftX + Math.cos(angle) * eyeRx * 0.3, leftY + Math.sin(angle) * eyeRy * 0.3, pupilR, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+
+                // 右眼
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.ellipse(rightX, rightY, eyeRx, isBlink ? Math.max(1, eyeRy * 0.15) : eyeRy, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.stroke();
+                if (!isBlink) {
+                    this.ctx.fillStyle = '#111111';
+                    this.ctx.beginPath();
+                    this.ctx.arc(rightX + Math.cos(angle) * eyeRx * 0.3, rightY + Math.sin(angle) * eyeRy * 0.3, pupilR, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+
+                // 嘴部（短线 + 分叉舌，卡通）
+                const mouthX = segment.x + Math.cos(angle) * (radius * 0.92);
+                const mouthY = segment.y + Math.sin(angle) * (radius * 0.92);
+                this.ctx.strokeStyle = '#111111';
+                this.ctx.lineWidth = Math.max(1, Math.floor(radius * 0.12));
+                this.ctx.beginPath();
+                this.ctx.moveTo(mouthX + px * radius * 0.12, mouthY + py * radius * 0.12);
+                this.ctx.lineTo(mouthX - px * radius * 0.12, mouthY - py * radius * 0.12);
+                this.ctx.stroke();
+
+                // 分叉舌（偶发伸出）
+                const tongueOut = this.stoneDragon.headAnim?.isTongueOut;
+                if (tongueOut) {
+                    const tongueLen = radius * 0.7;
+                    const tipX = mouthX + Math.cos(angle) * tongueLen;
+                    const tipY = mouthY + Math.sin(angle) * tongueLen;
+                    const forkOffset = Math.max(2, radius * 0.12);
+                    this.ctx.strokeStyle = '#ff375f';
+                    this.ctx.lineWidth = Math.max(1.5, radius * 0.1);
+                    this.ctx.shadowColor = '#ff2d55';
+                    this.ctx.shadowBlur = Math.max(4, radius * 0.6);
+                    // 主体
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(mouthX, mouthY);
+                    this.ctx.lineTo(tipX, tipY);
+                    this.ctx.stroke();
+                    // 分叉
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(tipX, tipY);
+                    this.ctx.lineTo(tipX + px * forkOffset, tipY + py * forkOffset);
+                    this.ctx.moveTo(tipX, tipY);
+                    this.ctx.lineTo(tipX - px * forkOffset, tipY - py * forkOffset);
+                    this.ctx.stroke();
+                }
+            }
+
+            // 渲染血量条（随段半径调整位置）
             const healthRatio = segment.health / segment.maxHealth;
-            const barWidth = this.dragonConfig.segmentSize * 1.5;
+            const barWidth = radius * 1.5;
             const barHeight = 6;
             const barX = segment.x - barWidth / 2;
-            const barY = segment.y - this.dragonConfig.segmentSize - 15;
+            const barY = segment.y - radius - 15;
             
             // 背景
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';

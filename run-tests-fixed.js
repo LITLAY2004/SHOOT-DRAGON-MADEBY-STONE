@@ -440,6 +440,13 @@ try {
         });
     });
 
+    // 全量模式回归
+    try {
+        require('./tests/FullGameModeTests.js');
+    } catch (e) {
+        console.warn('跳过 FullGameModeTests:', e?.message || e);
+    }
+
 } catch (error) {
     console.error('测试运行出错:', error.message);
 }

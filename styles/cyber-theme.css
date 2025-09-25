@@ -44,6 +44,15 @@
     --transition-fast: 0.2s ease;
     --transition-normal: 0.3s ease;
     --transition-slow: 0.5s ease;
+
+    /* 弹窗退出按钮主题变量 */
+    --exit-btn-fg: var(--text-primary);
+    --exit-btn-border: rgba(0, 255, 255, 0.5);
+    --exit-btn-bg: rgba(0, 255, 255, 0.2);
+    --exit-btn-shadow: rgba(0, 255, 255, 0.35);
+    --exit-btn-hover-bg: rgba(0, 255, 255, 0.35);
+    --exit-btn-hover-border: var(--primary-cyan);
+    --exit-btn-hover-shadow: rgba(0, 255, 255, 0.5);
 }
 
 /* === 全局样式重置 === */
@@ -515,4 +524,38 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--gradient-neon);
+}
+
+/* === 弹窗退出按钮（通用样式） === */
+.popup-exit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--exit-btn-border, rgba(0, 255, 255, 0.5));
+    background: var(--exit-btn-bg, rgba(0, 255, 255, 0.2));
+    color: var(--exit-btn-fg, #ffffff);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2147483647;
+    box-shadow: 0 6px 20px var(--exit-btn-shadow, rgba(0, 255, 255, 0.35));
+    backdrop-filter: blur(6px);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.popup-exit-btn:hover {
+    transform: scale(1.12);
+    background: var(--exit-btn-hover-bg, rgba(0, 255, 255, 0.35));
+    border-color: var(--exit-btn-hover-border, #00ffff);
+    box-shadow: 0 10px 28px var(--exit-btn-hover-shadow, rgba(0, 255, 255, 0.5));
+}
+
+.popup-exit-btn:active {
+    transform: scale(1.04);
 }

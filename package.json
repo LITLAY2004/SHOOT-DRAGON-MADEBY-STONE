@@ -1,6 +1,6 @@
 {
   "name": "dragon-hunter-game",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "数字龙猎 - Number Dragon Hunter Game",
   "main": "index.html",
   "scripts": {

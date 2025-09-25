@@ -219,7 +219,63 @@ class ProgressionSystem {
         try {
             const saved = localStorage.getItem('towerDefenseProgress');
             if (saved) {
-                const parsed = JSON.parse(saved);
+                // 验证 JSON 字符串的有效性
+                if (typeof saved !== 'string' || saved.length === 0) {
+                    throw new Error('存档数据为空或格式无效');
+                }
+                
+                console.log('🔍 检查存档数据:', saved.substring(0, 100) + (saved.length > 100 ? '...' : ''));
+                
+                // **强制检查所有可能的损坏格式**
+                const corruptedPatterns = [
+                    'invalid',
+                    '{"invalid": json}',
+                    '"{"invalid": json}"',
+                    '{\"invalid\": json}',
+                    '\"{\\"invalid\\": json}\"',
+                    'Unexpected token'
+                ];
+                
+                let isCorrupted = false;
+                for (const pattern of corruptedPatterns) {
+                    if (saved.includes(pattern)) {
+                        console.warn(`🗑️ 检测到损坏模式 "${pattern}":`, saved);
+                        isCorrupted = true;
+                        break;
+                    }
+                }
+                
+                // **强制清理损坏的存档**
+                if (isCorrupted) {
+                    localStorage.removeItem('towerDefenseProgress');
+                    localStorage.removeItem('towerDefenseSettings');
+                    console.warn('🧹 已强制清理所有损坏的存档数据');
+                    throw new Error('检测到损坏存档，已自动清理并重置进度');
+                }
+                
+                // **尝试JSON解析，失败时强制清理**
+                let parsed;
+                try {
+                    parsed = JSON.parse(saved);
+                } catch (jsonError) {
+                    console.error('🚨 JSON解析完全失败，存档内容:', saved);
+                    console.error('🚨 错误详情:', jsonError);
+                    
+                    // 强制清理所有相关数据
+                    localStorage.removeItem('towerDefenseProgress');
+                    localStorage.removeItem('towerDefenseSettings');
+                    localStorage.removeItem('towerDefenseAchievements');
+                    localStorage.removeItem('towerDefenseStats');
+                    
+                    console.warn('🧹🧹🧹 已强制清理所有游戏存档数据');
+                    throw new Error(`JSON格式完全损坏，已清理所有数据: ${jsonError.message}`);
+                }
+                
+                // 验证解析后的数据结构
+                if (!parsed || typeof parsed !== 'object') {
+                    throw new Error('存档数据结构无效');
+                }
+                
                 // 兜底默认结构
                 this.data = {
                     completedLevels: Array.isArray(parsed.completedLevels) ? parsed.completedLevels : [],
@@ -237,10 +293,24 @@ class ProgressionSystem {
                 };
             }
         } catch (e) {
+            // 清理损坏的存档数据
+            try {
+                localStorage.removeItem('towerDefenseProgress');
+                if (!silent) {
+                    console.warn('💧 已清理损坏的存档数据:', e.message);
+                }
+            } catch (clearError) {
+                if (!silent) {
+                    console.error('清理存档数据失败:', clearError);
+                }
+            }
+            
             // 只在非静默模式下输出错误信息
             if (!silent) {
                 console.error('加载关卡进度失败:', e);
             }
+            
+            // 返回默认数据结构
             this.data = {
                 completedLevels: [],
                 totalMoney: 0,

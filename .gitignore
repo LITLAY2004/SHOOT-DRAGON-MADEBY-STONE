@@ -33,6 +33,13 @@ Thumbs.db
 *.log
 server.log
 
+# Large bundles/archives
+*.bundle
+*.zip
+
+# Screenshots should be tracked for README rendering
+# (do not ignore screenshots/)
+
 # Test coverage
 coverage/
 .nyc_output/
@@ -58,5 +65,7 @@ temp-*
 debug-*
 test-temp-*
 
-# Exclude docs for GitHub
-/docs/
+# Docs directory is ignored except its README for repo overview
+docs/**
+!docs/README.md
+!docs/readme.md
