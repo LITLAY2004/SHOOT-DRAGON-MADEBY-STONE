@@ -28,7 +28,7 @@
 
     if (!EventSystem || !GameState) {
         throw new Error('GameController dependencies not available');
-    }
+}
 
 class GameController {
     constructor(canvas) {
@@ -53,7 +53,7 @@ class GameController {
             ? this.gameState.getPlayer()
             : this.gameState.player;
         this.basePlayerTemplate = initialPlayer ? { ...initialPlayer } : null;
-
+        
         // 绑定事件处理器
         this.setupEventHandlers();
         
@@ -255,7 +255,7 @@ class GameController {
         this.shopSystem = ShopSystem
             ? new ShopSystem(this.eventSystem)
             : null;
-
+        
         // 其他系统将在需要时初始化
         this.systems = {
             element: this.elementSystem,
@@ -495,20 +495,20 @@ class GameController {
         const canvas = this.canvas;
         const canListen = canvas && typeof canvas.addEventListener === 'function';
 
-        // 键盘事件
-        document.addEventListener('keydown', this.handleKeyDown.bind(this));
-        document.addEventListener('keyup', this.handleKeyUp.bind(this));
+            // 键盘事件
+            document.addEventListener('keydown', this.handleKeyDown.bind(this));
+            document.addEventListener('keyup', this.handleKeyUp.bind(this));
         
         if (!canListen) {
             return;
         }
-
-        // 鼠标事件
+            
+            // 鼠标事件
         canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        
-        // 防止右键菜单
+            
+            // 防止右键菜单
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
@@ -648,7 +648,7 @@ class GameController {
 
         // 生成第一只龙
         this.spawnInitialDragon();
-
+        
         console.log('游戏初始化完成');
     }
 
@@ -986,7 +986,7 @@ class GameController {
 
         // 移动处理
         const moveSpeed = player.speed * deltaTime;
-
+        
         if (this.keys['ArrowLeft'] || this.keys['a']) {
             player.x = Math.max(player.radius, player.x - moveSpeed);
         }
@@ -1134,7 +1134,7 @@ class GameController {
             if (dragon.timeDilation.remaining > 0) {
                 moveSpeed *= dragon.timeDilation.multiplier || 1;
                 dragon.timeDilation.remaining = Math.max(0, dragon.timeDilation.remaining - deltaTime);
-                if (dragon.slowEffect) {
+        if (dragon.slowEffect) {
                     const current = typeof dragon.slowEffect.remaining === 'number'
                         ? dragon.slowEffect.remaining
                         : dragon.slowEffect.duration;
@@ -1284,8 +1284,8 @@ class GameController {
             const minDistance = (laserCfg.range || 380) * 0.35;
             if (distance >= minDistance && Math.random() < chance) {
                 this.startLaserAttack(dragon, laserCfg);
-                return;
-            }
+            return;
+        }
         }
 
         const chargeCfg = config.chargeAttack || {};
@@ -1900,13 +1900,13 @@ class GameController {
             // 头部碰撞
             if (!dragon.isHeadDead && (dragon.headHealth || 0) > 0) {
                 const headDist = Math.sqrt(
-                    Math.pow(player.x - dragon.x, 2) + 
-                    Math.pow(player.y - dragon.y, 2)
-                );
+                Math.pow(player.x - dragon.x, 2) + 
+                Math.pow(player.y - dragon.y, 2)
+            );
                 if (headDist <= player.radius + dragon.radius) {
-                    this.handlePlayerDragonCollision(player, dragon);
-                    continue;
-                }
+                this.handlePlayerDragonCollision(player, dragon);
+                continue;
+            }
             }
 
             // 身体段碰撞
@@ -1936,7 +1936,7 @@ class GameController {
             const result = this.applyDamageToPlayer(damage, { source: dragon, type: 'dragon_collision' });
 
             if (result.healthDamage > 0 || result.shieldAbsorbed > 0) {
-                dragon.lastPlayerHit = currentTime;
+            dragon.lastPlayerHit = currentTime;
                 this.eventSystem.emit('PLAYER_DAMAGE', { player, dragon, damage, result });
             }
         }
@@ -2188,23 +2188,23 @@ class GameController {
                         this.ctx.strokeStyle = '#FFD700';
                         this.ctx.lineWidth = 3;
                     } else {
-                        this.ctx.fillStyle = dragon.color;
+            this.ctx.fillStyle = dragon.color;
                     }
-                    this.ctx.shadowColor = dragon.glowColor;
+            this.ctx.shadowColor = dragon.glowColor;
                     this.ctx.shadowBlur = 6;
                     this.ctx.globalAlpha = 1.0;
-                    this.ctx.beginPath();
+            this.ctx.beginPath();
                     this.ctx.arc(seg.x, seg.y, seg.radius, 0, Math.PI * 2);
-                    this.ctx.fill();
+            this.ctx.fill();
                     if (seg.rewardBonus) {
                         this.ctx.stroke();
                     }
 
                     this.renderSmallHealthBar(seg, seg.x, seg.y - seg.radius - 6);
                     this.renderHealthValue(seg.health, seg.x, seg.y);
-                    this.ctx.restore();
-                }
-            }
+            this.ctx.restore();
+        }
+    }
 
             if (Array.isArray(dragon.enhancementSegments) && dragon.enhancementSegments.length > 0) {
                 this.renderStoneEnhancementSegments(dragon);
@@ -2222,9 +2222,9 @@ class GameController {
                 this.ctx.fillStyle = dragon.color;
                 this.ctx.shadowColor = dragon.glowColor;
                 this.ctx.shadowBlur = 10;
-                this.ctx.beginPath();
+        this.ctx.beginPath();
                 this.ctx.arc(dragon.x, dragon.y, dragon.radius, 0, Math.PI * 2);
-                this.ctx.fill();
+            this.ctx.fill();
 
                 // 头部生命条
                 const headProxy = { health: currentHeadHealth, maxHealth: currentHeadMax };
@@ -2260,16 +2260,16 @@ class GameController {
             const x = (dragon.x || 0) + Math.cos(angle) * baseRadius;
             const y = (dragon.y || 0) + Math.sin(angle) * baseRadius;
 
-            this.ctx.save();
+        this.ctx.save();
             this.ctx.fillStyle = segment.color || '#9C8C6A';
             this.ctx.shadowColor = segment.glowColor || '#d1c4a8';
             this.ctx.shadowBlur = 6;
             this.ctx.globalAlpha = 0.9;
-            this.ctx.beginPath();
+        this.ctx.beginPath();
             this.ctx.arc(x, y, radius, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.restore();
-        }
+        this.ctx.fill();
+        this.ctx.restore();
+    }
     }
 
     /**
@@ -2306,7 +2306,7 @@ class GameController {
 
     renderHealthValue(value, x, y) {
         const numeric = Math.max(0, Math.floor(value || 0));
-        this.ctx.save();
+            this.ctx.save();
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = 'bold 16px "Roboto", sans-serif';
         this.ctx.textAlign = 'center';
@@ -2314,7 +2314,7 @@ class GameController {
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
         this.ctx.shadowBlur = 4;
         this.ctx.fillText(numeric.toLocaleString(), x, y);
-        this.ctx.restore();
+            this.ctx.restore();
     }
 
     /**
@@ -2449,10 +2449,10 @@ class GameController {
         for (const bullet of bullets) {
             this.ctx.save();
             this.ctx.fillStyle = '#FFFF00';
-            this.ctx.beginPath();
+                this.ctx.beginPath();
             this.ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.restore();
+                this.ctx.fill();
+                this.ctx.restore();
         }
     }
 
@@ -2550,7 +2550,7 @@ class GameController {
 
         const abilities = statusList || this.abilitySystem.getAbilityStatus();
         if (!Array.isArray(abilities) || abilities.length === 0) {
-            this.abilityHotspots = [];
+        this.abilityHotspots = [];
             return;
         }
 
@@ -3028,8 +3028,8 @@ class GameController {
     resolveGuardianShield(ability) {
         const player = this.gameState.getPlayer();
         if (!player) {
-            return;
-        }
+                return;
+            }
 
         const level = this.abilityUpgrades.guardian_shield || 0;
         const masteryBonus = this.gameState.permanentUpgrades?.skillMasteryBonus || 0;
@@ -3099,8 +3099,8 @@ class GameController {
     resolveHealingWave(ability) {
         const player = this.gameState.getPlayer();
         if (!player) {
-            return;
-        }
+                return;
+            }
 
         const level = this.abilityUpgrades.healing_wave || 0;
         const masteryBonus = this.gameState.permanentUpgrades?.skillMasteryBonus || 0;
@@ -3458,7 +3458,7 @@ class GameController {
         });
     }
 
-// ==================== 公共接口 ====================
+    // ==================== 公共接口 ====================
 
     /**
      * 获取游戏状态
