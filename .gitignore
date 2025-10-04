@@ -97,10 +97,53 @@ simple-test-runner.js
 WORK-SUMMARY.md
 REVIEW-CHECKLIST.md
 QUICK-START-TESTING.md
-*-FIX.md
+QUICK-TEST-GUIDE.md
+*-FIX*.md
 *-ANALYSIS.md
+*-CHECKLIST.md
+*-SUMMARY.md
+*-REPORT.md
 REMAINING-*.md
+BUGFIX-*.md
+TEST-*.md
+LOGIC-*.md
+PROJECT_CLEANUP_*.md
+PROJECT_RULES.md
+SYSTEM_STATUS_*.md
+DRAGON-*.md
+SKILL_SYSTEM_*.md
+STONE_DRAGON_*.md
+UI_UPGRADE_*.md
+JSON_ERROR_*.md
+DEPLOYMENT_*.md
+CODEX_*.md
+GIT_*.md
+
+# Development and testing HTML files
+complete-test.html
+game-test-*.html
+game-status.html
+force-clear-storage.html
+launch-game-backup.html
+launch-simple.html
+demo.html
+browser-game.html
+
+# Development scripts
+deploy-to-github.sh
+force-push.sh
+fix-*.js
+game-test-*.js
+github-auth-setup.md
+github-setup.md
+
+# Sample data
+data/sample-*.json
 
 # Keep only essential test files
 tests/**/Epic*.test.js
 tests/**/*Fix*.test.js
+
+# Screenshot guide (keep main README.md only)
+SCREENSHOT_GUIDE.md
+TEST_GUIDE.md
