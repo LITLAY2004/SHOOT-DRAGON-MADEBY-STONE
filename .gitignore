@@ -69,3 +69,38 @@ test-temp-*
 docs/**
 !docs/README.md
 !docs/readme.md
+
+# Backup and temporary directories
+backups/
+temp/
+tmp/
+
+# Debug and development temporary files
+debug-*.js
+debug-*.html
+temp-*.js
+temp-*.html
+test-temp-*.js
+
+# Server and runtime logs
+server.log
+*.log
+
+# Development scripts that shouldn't be in repo
+fix-*.js
+verify-*.sh
+qa-check.js
+run-test.js
+simple-test-runner.js
+
+# Work documentation (for local use only)
+WORK-SUMMARY.md
+REVIEW-CHECKLIST.md
+QUICK-START-TESTING.md
+*-FIX.md
+*-ANALYSIS.md
+REMAINING-*.md
+
+# Keep only essential test files
+tests/**/Epic*.test.js
+tests/**/*Fix*.test.js
