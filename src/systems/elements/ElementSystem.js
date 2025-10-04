@@ -32,7 +32,7 @@ class ElementSystem {
      * 创建基础元素配置（备用）
      */
     createBasicConfig() {
-        return {
+        const config = {
             ELEMENTS: {
                 normal: { name: '普通', color: '#FFFFFF', damageMultiplier: 1.0 },
                 fire: { name: '火', color: '#FF4500', damageMultiplier: 1.3 },
@@ -48,13 +48,18 @@ class ElementSystem {
                 thunder: { dark: 2.0, stone: 1.5, ice: 0.5 },
                 poison: { stone: 2.0, thunder: 1.5, fire: 0.7 },
                 dark: { fire: 1.5, thunder: 0.5 },
-                stone: { poison: 0.5, thunder: 0.7 }
-            },
-            getElement: (type) => this.ELEMENTS[type] || this.ELEMENTS.normal,
-            getEffectiveness: (attack, target) => {
-                return this.EFFECTIVENESS[attack]?.[target] || 1.0;
+                stone: { poison: 0.5, thunder: 0.7 },
+                normal: {}
             }
         };
+
+        config.getElement = (type) => config.ELEMENTS[type] || config.ELEMENTS.normal;
+        config.getEffectiveness = (attack, target) => {
+            const table = config.EFFECTIVENESS[attack];
+            return table && target in table ? table[target] : 1.0;
+        };
+
+        return config;
     }
 
     /**
@@ -631,6 +636,9 @@ class ElementSystem {
 }
 
 // 导出模块
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = ElementSystem;
+}
+if (typeof globalThis !== 'undefined') {
+    globalThis.ElementSystem = ElementSystem;
 }

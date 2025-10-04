@@ -73,7 +73,7 @@ class ProgressionSystem {
         // tests 期望存在 progressionSystem.data 以及 loadProgress/saveProgress 接口
         this.data = {
             completedLevels: [],
-            totalMoney: 0,
+            totalTokens: 0,
             totalKills: 0,
             gamesPlayed: 0
         };
@@ -279,7 +279,7 @@ class ProgressionSystem {
                 // 兜底默认结构
                 this.data = {
                     completedLevels: Array.isArray(parsed.completedLevels) ? parsed.completedLevels : [],
-                    totalMoney: Number(parsed.totalMoney || 0),
+                    totalTokens: Number(parsed.totalTokens || 0),
                     totalKills: Number(parsed.totalKills || 0),
                     gamesPlayed: Number(parsed.gamesPlayed || 0)
                 };
@@ -287,7 +287,7 @@ class ProgressionSystem {
                 // 无存档时初始化默认
                 this.data = {
                     completedLevels: [],
-                    totalMoney: 0,
+                    totalTokens: 0,
                     totalKills: 0,
                     gamesPlayed: 0
                 };
@@ -313,7 +313,7 @@ class ProgressionSystem {
             // 返回默认数据结构
             this.data = {
                 completedLevels: [],
-                totalMoney: 0,
+                totalTokens: 0,
                 totalKills: 0,
                 gamesPlayed: 0
             };
@@ -831,7 +831,7 @@ class ProgressionSystem {
 }
 
 // 导出类
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = ProgressionSystem;
 } else if (typeof window !== 'undefined') {
     window.ProgressionSystem = ProgressionSystem;

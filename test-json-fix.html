@@ -159,10 +159,10 @@
                 // 验证数据是否正确初始化
                 if (progressionSystem.data && 
                     Array.isArray(progressionSystem.data.completedLevels) &&
-                    typeof progressionSystem.data.totalMoney === 'number') {
+                    typeof progressionSystem.data.totalTokens === 'number') {
                     console.log('✅ 数据结构正确初始化');
                     console.log('completedLevels:', progressionSystem.data.completedLevels);
-                    console.log('totalMoney:', progressionSystem.data.totalMoney);
+                    console.log('totalTokens:', progressionSystem.data.totalTokens);
                 } else {
                     throw new Error('数据结构初始化失败');
                 }

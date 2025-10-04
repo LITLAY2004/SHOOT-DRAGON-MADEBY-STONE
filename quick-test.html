@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速测试 - 游戏启动修复验证</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #00ffff;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #00ff0033;
+            color: #00ff00;
+        }
+        
+        .status.error {
+            background: #ff000033;
+            color: #ff0000;
+        }
+        
+        .status.info {
+            background: #00ffff33;
+            color: #00ffff;
+        }
+        
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            border: 2px solid #00ffff;
+            background: #000011;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button.primary {
+            background: #00ffff;
+            color: #000;
+        }
+        
+        button.primary:hover {
+            background: #00cccc;
+            transform: scale(1.05);
+        }
+        
+        button.danger {
+            background: #ff0000;
+            color: #fff;
+        }
+        
+        button.danger:hover {
+            background: #cc0000;
+        }
+        
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .test-item {
+            padding: 5px;
+            margin: 5px 0;
+            border-left: 3px solid #666;
+            padding-left: 10px;
+        }
+        
+        .test-item.pass {
+            border-left-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .test-item.fail {
+            border-left-color: #ff0000;
+            color: #ff0000;
+        }
+        
+        .console-output {
+            background: #0f0f0f;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .console-line {
+            padding: 2px 0;
+        }
+        
+        .console-line.error {
+            color: #ff6b6b;
+        }
+        
+        .console-line.warn {
+            color: #ffd93d;
+        }
+        
+        .console-line.info {
+            color: #6bcfff;
+        }
+        
+        .console-line.log {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 游戏启动修复验证</h1>
+        
+        <div id="status" class="status info">
+            准备测试...
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="controls">
+            <button class="primary" onclick="runTests()">运行测试</button>
+            <button class="primary" onclick="startGame()">启动游戏</button>
+            <button class="danger" onclick="stopGame()">停止游戏</button>
+        </div>
+        
+        <div class="test-results">
+            <h3>测试结果</h3>
+            <div id="testOutput"></div>
+        </div>
+        
+        <div class="console-output">
+            <h3>控制台输出</h3>
+            <div id="consoleOutput"></div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { GameController } from './src/core/GameController.js';
+        
+        let gameController = null;
+        const canvas = document.getElementById('gameCanvas');
+        const statusDiv = document.getElementById('status');
+        const testOutput = document.getElementById('testOutput');
+        const consoleOutput = document.getElementById('consoleOutput');
+        
+        // 拦截console输出
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+        
+        function interceptConsole() {
+            ['log', 'error', 'warn', 'info'].forEach(method => {
+                console[method] = function(...args) {
+                    const line = document.createElement('div');
+                    line.className = `console-line ${method}`;
+                    line.textContent = args.join(' ');
+                    consoleOutput.appendChild(line);
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                    originalConsole[method](...args);
+                };
+            });
+        }
+        
+        interceptConsole();
+        
+        function setStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        function addTestResult(name, passed, details = '') {
+            const item = document.createElement('div');
+            item.className = `test-item ${passed ? 'pass' : 'fail'}`;
+            item.innerHTML = `${passed ? '✅' : '❌'} ${name}${details ? ': ' + details : ''}`;
+            testOutput.appendChild(item);
+        }
+        
+        window.runTests = async function() {
+            testOutput.innerHTML = '';
+            consoleOutput.innerHTML = '';
+            setStatus('正在运行测试...', 'info');
+            
+            let passCount = 0;
+            let totalCount = 0;
+            
+            try {
+                // 测试1: GameController创建
+                totalCount++;
+                try {
+                    gameController = new GameController(canvas);
+                    addTestResult('创建GameController', true);
+                    passCount++;
+                } catch (e) {
+                    addTestResult('创建GameController', false, e.message);
+                }
+                
+                // 测试2: 检查关键方法
+                const methods = [
+                    'spawnStoneEnhancementSegment',
+                    'handleEnhancementSegmentDestroyed',
+                    'render',
+                    'renderGame',
+                    'renderPlayer',
+                    'renderDragons',
+                    'createDragon',
+                    'start'
+                ];
+                
+                for (const method of methods) {
+                    totalCount++;
+                    const exists = typeof gameController[method] === 'function';
+                    addTestResult(`方法 ${method}`, exists);
+                    if (exists) passCount++;
+                }
+                
+                // 测试3: 创建石龙
+                totalCount++;
+                try {
+                    const dragon = gameController.createDragon('stone');
+                    const valid = dragon && dragon.type === 'stone' && Array.isArray(dragon.enhancementSegments);
+                    addTestResult('创建石龙', valid, `ID: ${dragon?.id}`);
+                    if (valid) passCount++;
+                } catch (e) {
+                    addTestResult('创建石龙', false, e.message);
+                }
+                
+                // 测试4: 创建强化段
+                totalCount++;
+                try {
+                    const dragon = {
+                        id: 'test-dragon',
+                        type: 'stone',
+                        x: 400,
+                        y: 300,
+                        radius: 30,
+                        maxHealth: 500,
+                        enhancementSegments: []
+                    };
+                    gameController.spawnStoneEnhancementSegment(dragon);
+                    const valid = dragon.enhancementSegments.length === 1;
+                    addTestResult('创建强化段', valid, `数量: ${dragon.enhancementSegments.length}`);
+                    if (valid) passCount++;
+                } catch (e) {
+                    addTestResult('创建强化段', false, e.message);
+                }
+                
+                // 测试5: 游戏启动
+                totalCount++;
+                try {
+                    gameController.start();
+                    const valid = gameController.gameState.gameStarted;
+                    addTestResult('游戏启动', valid);
+                    if (valid) passCount++;
+                } catch (e) {
+                    addTestResult('游戏启动', false, e.message);
+                }
+                
+                // 测试6: 玩家存在
+                totalCount++;
+                const playerExists = gameController.gameState.player !== null;
+                addTestResult('玩家存在', playerExists);
+                if (playerExists) passCount++;
+                
+                // 测试7: 龙存在
+                totalCount++;
+                const dragons = gameController.gameState.getDragons();
+                const dragonsExist = dragons.length > 0;
+                addTestResult('龙存在', dragonsExist, `数量: ${dragons.length}`);
+                if (dragonsExist) passCount++;
+                
+                // 测试8: 渲染
+                totalCount++;
+                try {
+                    gameController.render();
+                    addTestResult('渲染', true);
+                    passCount++;
+                } catch (e) {
+                    addTestResult('渲染', false, e.message);
+                }
+                
+                // 总结
+                const allPassed = passCount === totalCount;
+                setStatus(
+                    `测试完成: ${passCount}/${totalCount} 通过`,
+                    allPassed ? 'success' : 'error'
+                );
+                
+            } catch (error) {
+                console.error('测试失败:', error);
+                setStatus('测试失败: ' + error.message, 'error');
+            }
+        };
+        
+        window.startGame = function() {
+            try {
+                if (!gameController) {
+                    gameController = new GameController(canvas);
+                }
+                gameController.start();
+                setStatus('游戏运行中', 'success');
+                console.log('游戏已启动');
+            } catch (error) {
+                console.error('启动游戏失败:', error);
+                setStatus('启动失败: ' + error.message, 'error');
+            }
+        };
+        
+        window.stopGame = function() {
+            if (gameController) {
+                gameController.stop();
+                setStatus('游戏已停止', 'info');
+                console.log('游戏已停止');
+            }
+        };
+        
+        // 自动运行测试
+        console.log('页面加载完成，准备测试...');
+        setTimeout(runTests, 500);
+    </script>
+</body>
+</html>
+

@@ -9,6 +9,8 @@ class GameModeSelector {
         this.game = gameInstance;
         this.currentMode = null;
         this.selectedLevel = null;
+        this.selectedDifficulty = 'normal';
+        this.eventSystem = (gameInstance && gameInstance.eventSystem) ? gameInstance.eventSystem : null;
         
         this.setupUI();
         this.bindEvents();
@@ -126,21 +128,21 @@ class GameModeSelector {
                                     <input type="radio" name="difficulty" value="normal" checked>
                                     <span class="difficulty-label">
                                         <strong>标准</strong>
-                                        <small>推荐的平衡体验</small>
+                                        <small>默认敌人强度与掉落</small>
                                     </span>
                                 </label>
                                 <label class="difficulty-option">
                                     <input type="radio" name="difficulty" value="hard">
                                     <span class="difficulty-label">
                                         <strong>困难</strong>
-                                        <small>更快的敌人增强</small>
+                                        <small>龙更强，掉落略少</small>
                                     </span>
                                 </label>
                                 <label class="difficulty-option">
                                     <input type="radio" name="difficulty" value="nightmare">
                                     <span class="difficulty-label">
                                         <strong>噩梦</strong>
-                                        <small>只有真正的勇士</small>
+                                        <small>龙狂暴成长，奖励稀少</small>
                                     </span>
                                 </label>
                             </div>
@@ -695,7 +697,7 @@ class GameModeSelector {
                         ).join('')}
                     </div>
                     <div class="level-rewards">
-                        <span class="reward-item">🪙 ${level.rewards.coins}</span>
+                        <span class="reward-item">🪙 ${level.rewards.tokens}</span>
                         <span class="reward-item">📈 ${level.rewards.experience}</span>
                         <span class="reward-item">🔮 ${level.rewards.skillPoints}SP</span>
                     </div>
@@ -918,11 +920,13 @@ class GameModeSelector {
      * 开始无限模式
      */
     startEndlessMode() {
-        const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+        const input = document.querySelector('input[name="difficulty"]:checked');
+        const difficulty = input ? input.value : 'normal';
 
         // 记录选择
         this.currentMode = LevelConfig.GAME_MODES.ENDLESS;
         this.selectedLevel = null;
+        this.selectedDifficulty = difficulty;
 
         if (this.game && this.game.gameModeManager) {
             // 设置难度配置
@@ -951,10 +955,17 @@ class GameModeSelector {
         this.container.style.display = 'none';
         
         // 触发游戏开始事件
-        if (this.game.eventSystem) {
+        if (this.game && this.game.eventSystem) {
             this.game.eventSystem.emit('mode_selected', {
                 mode: this.currentMode,
-                level: this.selectedLevel
+                level: this.selectedLevel,
+                difficulty: this.selectedDifficulty
+            });
+        } else if (this.eventSystem && typeof this.eventSystem.emit === 'function') {
+            this.eventSystem.emit('mode_selected', {
+                mode: this.currentMode,
+                level: this.selectedLevel,
+                difficulty: this.selectedDifficulty
             });
         }
     }
@@ -998,7 +1009,7 @@ class GameModeSelector {
 }
 
 // 导出类
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = GameModeSelector;
 } else if (typeof window !== 'undefined') {
     window.GameModeSelector = GameModeSelector;

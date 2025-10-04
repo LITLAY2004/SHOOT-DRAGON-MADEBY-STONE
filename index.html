@@ -274,16 +274,38 @@
     <div style="text-align:center; margin-top: 20px; opacity: 0.8;">制作人：ASCETIC MONK</div>
 
     <!-- 加载核心模块 -->
+    <script>
+        (function(global) {
+            if (!global.module) {
+                global.module = { __browser: true };
+            } else {
+                global.module.__browser = true;
+                if (global.module.exports === undefined) {
+                    global.module.exports = undefined;
+                }
+            }
+            if (!global.exports) {
+                global.exports = {};
+            }
+        }(typeof window !== 'undefined' ? window : this));
+    </script>
     <script src="src/utils/MathUtils.js"></script>
-    <script src="src/core/EventSystem.js"></script>
-    <script src="src/core/GameState.js"></script>
     <script src="src/config/ElementConfig.js"></script>
     <script src="src/config/BalanceConfig.js"></script>
+    <script src="src/core/EventSystem.js"></script>
+    <script src="src/core/GameState.js"></script>
     <script src="src/systems/elements/ElementSystem.js"></script>
+    <script src="src/systems/EnhancementSystem.js"></script>
+    <script src="src/systems/ComboSystem.js"></script>
+    <script src="src/systems/WaveModifierSystem.js"></script>
+    <script src="src/systems/PerkSystem.js"></script>
+    <script src="src/systems/AbilitySystem.js"></script>
+    <script src="src/systems/ResourceSystem.js"></script>
     <script src="src/systems/SkillSystem.js"></script>
     <script src="src/core/GameController.js"></script>
     
     <!-- 加载游戏版本 -->
+    <script src="src/game-refactored.js"></script>
     <script src="src/game.js"></script>
 
     <script>

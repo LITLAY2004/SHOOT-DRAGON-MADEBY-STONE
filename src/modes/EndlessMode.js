@@ -12,32 +12,58 @@ class EndlessMode {
         this.survivalTime = 0;
         this.score = 0;
         this.difficulty = 'normal'; // normal, hard, nightmare
-        
+        this._runtimeDifficultyCache = null;
+        this._runtimeDifficultyKey = null;
+
         // 难度配置
         this.difficultyConfig = {
             normal: {
-                healthMultiplier: 1.15,    // 每波敌人血量增加15%
-                speedMultiplier: 1.05,     // 每波速度增加5%
-                damageMultiplier: 1.1,     // 每波伤害增加10%
-                countMultiplier: 1.08,     // 每波数量增加8%
-                bossFrequency: 10,         // 每10波一个Boss
-                specialEnemyChance: 0.1    // 10%概率出现特殊敌人
+                healthMultiplier: 1.12,
+                speedMultiplier: 1.04,
+                damageMultiplier: 1.08,
+                countMultiplier: 1.06,
+                bossFrequency: 10,
+                specialEnemyChance: 0.08,
+                spawnInterval: 780,
+                baseStats: {
+                    health: 1.0,
+                    speed: 1.0,
+                    damage: 1.0,
+                    count: 1.0,
+                    reward: 1.0
+                }
             },
             hard: {
-                healthMultiplier: 1.25,
-                speedMultiplier: 1.08,
-                damageMultiplier: 1.15,
+                healthMultiplier: 1.24,
+                speedMultiplier: 1.09,
+                damageMultiplier: 1.18,
                 countMultiplier: 1.12,
                 bossFrequency: 8,
-                specialEnemyChance: 0.15
+                specialEnemyChance: 0.16,
+                spawnInterval: 640,
+                baseStats: {
+                    health: 1.3,
+                    speed: 1.1,
+                    damage: 1.2,
+                    count: 1.15,
+                    reward: 1.2
+                }
             },
             nightmare: {
-                healthMultiplier: 1.35,
-                speedMultiplier: 1.12,
-                damageMultiplier: 1.2,
-                countMultiplier: 1.15,
-                bossFrequency: 5,
-                specialEnemyChance: 0.25
+                healthMultiplier: 1.32,
+                speedMultiplier: 1.14,
+                damageMultiplier: 1.28,
+                countMultiplier: 1.18,
+                bossFrequency: 6,
+                specialEnemyChance: 0.24,
+                spawnInterval: 520,
+                baseStats: {
+                    health: 1.65,
+                    speed: 1.25,
+                    damage: 1.4,
+                    count: 1.35,
+                    reward: 1.45
+                }
             }
         };
         
@@ -95,8 +121,8 @@ class EndlessMode {
                 duration: 5000,
                 probability: 0.05,
                 effect: () => {
-                    if (this.game && this.game.resources) {
-                        this.game.resources.money = (this.game.resources.money || 0) + 10;
+                    if (this.game && this.game.shopSystem && typeof this.game.shopSystem.addCurrency === 'function') {
+                        this.game.shopSystem.addCurrency(10);
                     }
                 }
             }
@@ -138,6 +164,13 @@ class EndlessMode {
                     this.onWaveComplete();
                 }
             });
+
+            this.game.eventSystem.on('DIFFICULTY_CHANGED', () => {
+                this.invalidateDifficultyCache();
+                if (this.isActive) {
+                    this.updateUI();
+                }
+            });
         }
     }
 
@@ -151,6 +184,7 @@ class EndlessMode {
             return false;
         }
         this.difficulty = difficulty;
+        this.invalidateDifficultyCache();
         this.isActive = true;
         this.currentWave = 0;
         this.totalKills = 0;
@@ -163,6 +197,14 @@ class EndlessMode {
         this.tookDamageThisWave = false;
         
         console.log(`🌊 无限模式开始 - 难度: ${difficulty}`);
+
+        if (this.game && typeof this.game.setDifficulty === 'function') {
+            this.game.setDifficulty(difficulty, {
+                skipEvent: true,
+                preserveHealth: true,
+                skipShopReapply: true
+            });
+        }
         
         // 开始计时器
         this.startSurvivalTimer();
@@ -190,6 +232,56 @@ class EndlessMode {
                 this.updateUI();
             }
         }, 1000);
+    }
+
+    invalidateDifficultyCache() {
+        this._runtimeDifficultyCache = null;
+        this._runtimeDifficultyKey = null;
+    }
+
+    getDifficultyRuntimeConfig() {
+        const base = this.difficultyConfig[this.difficulty] || this.difficultyConfig.normal;
+        const profile = this.game?.gameController?.activeDifficultyProfile?.endless;
+        if (!profile) {
+            return base;
+        }
+
+        const cacheKey = `${this.difficulty}-${this.game?.gameController?.difficulty || this.difficulty}`;
+        if (this._runtimeDifficultyCache && this._runtimeDifficultyKey === cacheKey) {
+            return this._runtimeDifficultyCache;
+        }
+
+        const applyMultiplier = (value, multiplier) => {
+            const baseValue = typeof value === 'number' ? value : 1;
+            const m = typeof multiplier === 'number' ? multiplier : 1;
+            return baseValue * m;
+        };
+
+        const merged = {
+            ...base,
+            baseStats: { ...(base.baseStats || {}) }
+        };
+
+        merged.spawnInterval = Math.max(200, Math.round(applyMultiplier(base.spawnInterval, profile.spawnInterval)));
+        merged.healthMultiplier = applyMultiplier(base.healthMultiplier, profile.healthMultiplier);
+        merged.speedMultiplier = applyMultiplier(base.speedMultiplier, profile.speedMultiplier);
+        merged.damageMultiplier = applyMultiplier(base.damageMultiplier, profile.damageMultiplier);
+        merged.countMultiplier = applyMultiplier(base.countMultiplier, profile.countMultiplier);
+        merged.specialEnemyChance = Math.min(0.9, Math.max(0, base.specialEnemyChance * (profile.specialChanceMultiplier ?? 1)));
+        merged.bossFrequency = Math.max(3, Math.round(applyMultiplier(base.bossFrequency, profile.bossFrequencyMultiplier)));
+
+        merged.baseStats = {
+            ...merged.baseStats,
+            health: applyMultiplier(base.baseStats?.health, profile.healthMultiplier),
+            speed: applyMultiplier(base.baseStats?.speed, profile.speedMultiplier),
+            damage: applyMultiplier(base.baseStats?.damage, profile.damageMultiplier),
+            count: applyMultiplier(base.baseStats?.count, profile.countMultiplier),
+            reward: applyMultiplier(base.baseStats?.reward, profile.rewardMultiplier)
+        };
+
+        this._runtimeDifficultyCache = merged;
+        this._runtimeDifficultyKey = cacheKey;
+        return merged;
     }
 
     /**
@@ -224,12 +316,13 @@ class EndlessMode {
      * 生成波次敌人
      */
     spawnWaveEnemies() {
-        const config = this.difficultyConfig[this.difficulty];
-        const waveMultiplier = Math.pow(config.healthMultiplier, this.currentWave - 1);
-        
-        // 基础敌人数量
+        const config = this.getDifficultyRuntimeConfig();
+        const spawnInterval = config.spawnInterval || 800;
+        const baseStats = config.baseStats || { health: 1, speed: 1, damage: 1, count: 1 };
+
         let baseCount = Math.min(5 + Math.floor(this.currentWave / 3), 20);
-        let enemyCount = Math.floor(baseCount * Math.pow(config.countMultiplier, this.currentWave / 10));
+        baseCount = Math.max(3, Math.floor(baseCount * baseStats.count));
+        let enemyCount = Math.floor(baseCount * Math.pow(config.countMultiplier, this.currentWave / 8));
         
         // Boss波次
         const isBossWave = this.currentWave % config.bossFrequency === 0;
@@ -243,33 +336,34 @@ class EndlessMode {
         for (let i = 0; i < enemyCount; i++) {
             setTimeout(() => {
                 this.spawnEnemy(false);
-            }, i * 800); // 每0.8秒生成一个敌人
+            }, i * spawnInterval);
         }
         
         // 特殊敌人
         if (Math.random() < config.specialEnemyChance) {
             setTimeout(() => {
                 this.spawnEnemy(true);
-            }, enemyCount * 400);
+            }, enemyCount * (spawnInterval * 0.5));
         }
     }
 
     // 测试所需：根据波次计算属性
     calculateWaveStats(wave, base) {
         const w = Math.max(1, wave);
-        const cfg = this.difficultyConfig[this.difficulty] || this.difficultyConfig.normal;
+        const cfg = this.getDifficultyRuntimeConfig();
+        const baseStats = cfg.baseStats || { health: 1, speed: 1, damage: 1, count: 1 };
         const isMilestone = w % Math.max(1, cfg.bossFrequency) === 0;
         return {
-            health: Math.floor(base.health * Math.pow(cfg.healthMultiplier, Math.floor((w - 1) / 1))),
-            speed: Math.max(1, base.speed * Math.pow(cfg.speedMultiplier, Math.floor((w - 1) / 2))),
-            damage: Math.floor(base.damage * Math.pow(cfg.damageMultiplier, Math.floor((w - 1) / 2))),
+            health: Math.floor(base.health * baseStats.health * Math.pow(cfg.healthMultiplier, Math.floor((w - 1) / 1))),
+            speed: Math.max(1, base.speed * baseStats.speed * Math.pow(cfg.speedMultiplier, Math.floor((w - 1) / 2))),
+            damage: Math.floor(base.damage * baseStats.damage * Math.pow(cfg.damageMultiplier, Math.floor((w - 1) / 2))),
             count: Math.floor((base.count || 5) * Math.pow(cfg.countMultiplier, Math.floor((w - 1) / 3))),
             isMilestone
         };
     }
 
     isBossWave(wave) {
-        const cfg = this.difficultyConfig[this.difficulty] || this.difficultyConfig.normal;
+        const cfg = this.getDifficultyRuntimeConfig();
         return wave > 0 && wave % cfg.bossFrequency === 0;
     }
 
@@ -292,18 +386,18 @@ class EndlessMode {
     spawnEnemy(isSpecial = false) {
         if (!this.game.enemySystem) return;
         
-        const config = this.difficultyConfig[this.difficulty];
-        const waveMultiplier = this.currentWave;
-        
-        // 计算敌人属性
-        const baseHealth = isSpecial ? 150 : 100;
-        const health = Math.floor(baseHealth * Math.pow(config.healthMultiplier, waveMultiplier / 5));
-        
-        const baseSpeed = isSpecial ? 80 : 60;
-        const speed = Math.floor(baseSpeed * Math.pow(config.speedMultiplier, waveMultiplier / 8));
-        
-        const baseDamage = isSpecial ? 35 : 25;
-        const damage = Math.floor(baseDamage * Math.pow(config.damageMultiplier, waveMultiplier / 6));
+        const config = this.getDifficultyRuntimeConfig();
+        const baseStats = config.baseStats || { health: 1, speed: 1, damage: 1, reward: 1 };
+        const waveMultiplier = Math.max(1, this.currentWave);
+
+        const baseHealth = (isSpecial ? 150 : 100) * baseStats.health;
+        const health = Math.floor(baseHealth * Math.pow(config.healthMultiplier, waveMultiplier / 4));
+
+        const baseSpeed = (isSpecial ? 80 : 60) * baseStats.speed;
+        const speed = Math.floor(baseSpeed * Math.pow(config.speedMultiplier, waveMultiplier / 6));
+
+        const baseDamage = (isSpecial ? 35 : 25) * baseStats.damage;
+        const damage = Math.floor(baseDamage * Math.pow(config.damageMultiplier, waveMultiplier / 5));
         
         // 随机选择敌人类型
         const enemyTypes = isSpecial ? 
@@ -337,6 +431,8 @@ class EndlessMode {
         }
         
         // 创建敌人
+        const rewardMultiplier = baseStats.reward || 1;
+
         const enemy = {
             id: 'endless_' + Date.now() + '_' + Math.random(),
             type: enemyType,
@@ -347,8 +443,8 @@ class EndlessMode {
             speed: speed,
             damage: damage,
             isSpecial: isSpecial,
-            reward: Math.floor(10 * Math.pow(1.1, waveMultiplier / 5)),
-            experience: Math.floor(5 * Math.pow(1.05, waveMultiplier / 8))
+            reward: Math.floor(10 * rewardMultiplier * Math.pow(1.12, waveMultiplier / 5)),
+            experience: Math.floor(5 * rewardMultiplier * Math.pow(1.05, waveMultiplier / 6))
         };
         
         this.game.enemySystem.addEnemy(enemy);
@@ -360,13 +456,14 @@ class EndlessMode {
     spawnBoss() {
         if (!this.game.enemySystem) return;
         
-        const config = this.difficultyConfig[this.difficulty];
+        const config = this.getDifficultyRuntimeConfig();
+        const baseStats = config.baseStats || { health: 1, speed: 1, damage: 1, reward: 1 };
         const waveMultiplier = this.currentWave;
         
         // Boss属性更强
-        const health = Math.floor(500 * Math.pow(config.healthMultiplier, waveMultiplier / 3));
-        const speed = Math.floor(40 * Math.pow(config.speedMultiplier, waveMultiplier / 10));
-        const damage = Math.floor(60 * Math.pow(config.damageMultiplier, waveMultiplier / 4));
+        const health = Math.floor(500 * baseStats.health * Math.pow(config.healthMultiplier, waveMultiplier / 3));
+        const speed = Math.floor(40 * baseStats.speed * Math.pow(config.speedMultiplier, waveMultiplier / 10));
+        const damage = Math.floor(60 * baseStats.damage * Math.pow(config.damageMultiplier, waveMultiplier / 4));
         
         const bossTypes = ['ancient_dragon', 'demon_lord', 'lich_king', 'titan_golem'];
         const bossType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
@@ -382,8 +479,8 @@ class EndlessMode {
             speed: speed,
             damage: damage,
             isBoss: true,
-            reward: Math.floor(100 * Math.pow(1.2, waveMultiplier / 5)),
-            experience: Math.floor(50 * Math.pow(1.15, waveMultiplier / 6))
+            reward: Math.floor(100 * (baseStats.reward || 1) * Math.pow(1.2, waveMultiplier / 5)),
+            experience: Math.floor(50 * (baseStats.reward || 1) * Math.pow(1.15, waveMultiplier / 6))
         };
         
         this.game.enemySystem.addEnemy(boss);
@@ -725,6 +822,48 @@ class EndlessMode {
         }
         // 简化：忽略恢复逻辑（测试只关心调用）
     }
+    
+    /**
+     * 更新连击状态（测试所需）
+     */
+    updateCombo() {
+        const now = Date.now();
+        // 如果超过连击持续时间，重置连击
+        if (now - this.lastKillTime > this.comboDuration) {
+            this.killCombo = 0;
+            this.combo = 0;
+        }
+    }
+    
+    /**
+     * 检查特殊事件（测试所需 - 返回活动事件）
+     * @returns {Object|null} 活动事件或null
+     */
+    checkForSpecialEvents() {
+        // 如果有活动事件，返回它
+        if (this.activeEvent) {
+            return {
+                type: this.activeEvent.type,
+                duration: this.activeEvent.duration,
+                startTime: this.activeEvent.startTime
+            };
+        }
+        
+        // 随机触发特殊事件（测试场景）
+        if (Math.random() < 0.1) { // 10%概率
+            const eventNames = Object.keys(this.specialEvents);
+            const randomEvent = eventNames[Math.floor(Math.random() * eventNames.length)];
+            this.triggerSpecialEvent(randomEvent);
+            
+            return this.activeEvent ? {
+                type: this.activeEvent.type,
+                duration: this.activeEvent.duration,
+                startTime: this.activeEvent.startTime
+            } : null;
+        }
+        
+        return null;
+    }
 
     // 排行榜：保存成绩
     saveHighScore() {
@@ -880,7 +1019,7 @@ class EndlessMode {
 }
 
 // 导出类
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = EndlessMode;
 } else if (typeof window !== 'undefined') {
     window.EndlessMode = EndlessMode;

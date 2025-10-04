@@ -23,6 +23,11 @@ class GameState {
         this.gameTime = 0;
 
         // 玩家状态
+        const playerConfig = (typeof BalanceConfig !== 'undefined' && BalanceConfig.PLAYER) ? BalanceConfig.PLAYER : null;
+        const startMana = playerConfig?.startMana ?? 100;
+        const maxMana = playerConfig?.maxMana ?? 100;
+        const manaRegenRate = playerConfig?.manaRegenRate ?? 10;
+
         this.player = {
             x: 400,
             y: 300,
@@ -34,7 +39,25 @@ class GameState {
             weaponElement: 'normal',
             level: 1,
             experience: 0,
-            experienceToNext: 100
+            experienceToNext: 100,
+            mana: startMana,
+            maxMana,
+            manaRegenRate,
+            shield: null,
+            invulnerableTimer: 0,
+            lastDashDirection: null
+        };
+
+        this.permanentUpgrades = {
+            attackBonus: 0,
+            maxHealthBonus: 0,
+            manaRegenBonus: 0,
+            skillMasteryLevel: 0,
+            skillMasteryBonus: 0,
+            attackSpeedBonus: 0,
+            movementBonus: 0,
+            attackBonusFromRewards: 0,
+            manaBonus: 0
         };
 
         // 游戏对象集合
@@ -50,7 +73,24 @@ class GameState {
         // 系统状态
         this.soundEnabled = true;
         this.renderQuality = 'high';
-        
+
+        // 资源状态
+        this.resources = {
+            crystals: startMana
+        };
+
+        // 连击与增益状态
+        this.combo = {
+            count: 0,
+            best: 0,
+            timeRemaining: 0,
+            window: 6,
+            multiplier: 1,
+            experienceMultiplier: 1
+        };
+        this.waveModifier = null;
+        this.perks = [];
+
         // 成就和统计
         this.achievements = new Map();
         this.statistics = {
@@ -72,22 +112,21 @@ class GameState {
     // =============== Getters ===============
 
     /**
-     * 获取玩家数据
+     * 获取玩家数据（返回引用，允许直接修改）
      */
     getPlayer() {
-        return { ...this.player };
+        return this.player;
     }
 
     /**
      * 获取所有龙
      */
     getDragons() {
-        const allDragons = [];
         if (this.stoneDragon) {
-            allDragons.push(this.stoneDragon);
+            const nonStone = this.dragons.filter(dragon => dragon !== this.stoneDragon);
+            return [this.stoneDragon, ...nonStone];
         }
-        allDragons.push(...this.dragons);
-        return allDragons;
+        return [...this.dragons];
     }
 
     /**
@@ -151,6 +190,46 @@ class GameState {
      */
     getLoot() {
         return [...this.loot];
+    }
+
+    /**
+     * 获取资源信息
+     */
+    getResources() {
+        return { ...this.resources };
+    }
+
+    getComboState() {
+        return { ...this.combo };
+    }
+
+    setComboState(state) {
+        this.combo = {
+            ...this.combo,
+            ...(state || {})
+        };
+        this.notifyChange('combo', { ...this.combo });
+    }
+
+    getWaveModifier() {
+        return this.waveModifier ? { ...this.waveModifier } : null;
+    }
+
+    setWaveModifier(modifier) {
+        this.waveModifier = modifier ? { ...modifier } : null;
+        this.notifyChange('waveModifier', this.waveModifier);
+    }
+
+    getPerks() {
+        return [...this.perks];
+    }
+
+    addPerk(perk) {
+        if (!perk) {
+            return;
+        }
+        this.perks.push(perk);
+        this.notifyChange('perks', [...this.perks]);
     }
 
     // =============== Setters ===============
@@ -219,9 +298,15 @@ class GameState {
      * @param {Object} dragon - 龙对象
      */
     addDragon(dragon) {
+        if (!dragon) {
+            return;
+        }
+
         if (dragon.type === 'stone') {
             this.stoneDragon = dragon;
-        } else {
+        }
+
+        if (!this.dragons.includes(dragon)) {
             this.dragons.push(dragon);
         }
         this.notifyChange('dragons', this.getDragons());
@@ -234,11 +319,11 @@ class GameState {
     removeDragon(dragon) {
         if (dragon === this.stoneDragon) {
             this.stoneDragon = null;
-        } else {
-            const index = this.dragons.indexOf(dragon);
-            if (index !== -1) {
-                this.dragons.splice(index, 1);
-            }
+        }
+        // 从dragons数组中移除(包括石龙)
+        const index = this.dragons.indexOf(dragon);
+        if (index !== -1) {
+            this.dragons.splice(index, 1);
         }
         this.notifyChange('dragons', this.getDragons());
     }
@@ -314,6 +399,111 @@ class GameState {
         this.damageNumbers = this.damageNumbers.filter(dn => dn.life > 0);
     }
 
+    addLoot(loot) {
+        if (!loot) {
+            return;
+        }
+        this.loot.push(loot);
+        this.notifyChange('loot', this.getLoot());
+    }
+
+    removeLoot(loot) {
+        const index = this.loot.indexOf(loot);
+        if (index !== -1) {
+            this.loot.splice(index, 1);
+            this.notifyChange('loot', this.getLoot());
+        }
+    }
+
+    updateLoot(loot, updates) {
+        if (!loot || !updates) {
+            return;
+        }
+        const index = this.loot.indexOf(loot);
+        if (index === -1) {
+            return;
+        }
+        this.loot[index] = {
+            ...this.loot[index],
+            ...updates
+        };
+        this.notifyChange('loot', this.getLoot());
+    }
+
+    collectLoot(loot) {
+        if (!loot) {
+            return null;
+        }
+        this.removeLoot(loot);
+        if (loot.type && loot.type !== 'ability_upgrade') {
+            this.addResource(loot.type, loot.value || 0);
+        }
+        return this.getResources();
+    }
+
+    addResource(type, amount) {
+        if (!type || typeof amount !== 'number') {
+            return this.getResources();
+        }
+
+        if (typeof this.resources[type] !== 'number') {
+            this.resources[type] = 0;
+        }
+
+        this.resources[type] = Math.max(0, this.resources[type] + amount);
+        this.syncResourceToPlayer(type);
+        this.notifyChange('resources', this.getResources());
+        this.eventSystem.emit('RESOURCE_UPDATE', {
+            type,
+            amount,
+            total: this.resources[type],
+            resources: this.getResources()
+        });
+        return this.getResources();
+    }
+
+    spendResource(type, amount) {
+        if (typeof amount !== 'number' || amount <= 0) {
+            return false;
+        }
+        if (typeof this.resources[type] !== 'number') {
+            return false;
+        }
+        if (this.resources[type] < amount) {
+            return false;
+        }
+
+        this.resources[type] -= amount;
+        this.resources[type] = Math.max(0, this.resources[type]);
+        this.syncResourceToPlayer(type);
+        this.notifyChange('resources', this.getResources());
+        this.eventSystem.emit('RESOURCE_UPDATE', {
+            type,
+            amount: -amount,
+            total: this.resources[type],
+            resources: this.getResources()
+        });
+        return true;
+    }
+
+    syncResourceToPlayer(type) {
+        if (type !== 'crystals' || !this.player) {
+            return;
+        }
+
+        const maxMana = typeof this.player.maxMana === 'number' ? this.player.maxMana : undefined;
+        let manaValue = this.resources.crystals;
+        if (!Number.isFinite(manaValue)) {
+            manaValue = 0;
+        }
+        if (typeof maxMana === 'number' && Number.isFinite(maxMana)) {
+            manaValue = Math.min(maxMana, manaValue);
+        }
+        manaValue = Math.max(0, manaValue);
+        this.player.mana = manaValue;
+        this.notifyChange('player', this.player);
+    }
+
     // =============== 统计数据管理 ===============
 
     /**
@@ -347,6 +537,41 @@ class GameState {
      */
     recordTowerUpgrade() {
         this.statistics.towersUpgraded++;
+    }
+
+    calculateExperienceForLevel(level) {
+        const exp = 100 * Math.pow(1.35, Math.max(0, level - 1));
+        return Math.max(50, Math.floor(exp));
+    }
+
+    addExperience(amount) {
+        if (typeof amount !== 'number' || amount <= 0) {
+            return { levelUps: [] };
+        }
+
+        const player = this.player;
+        player.experience += amount;
+        this.notifyChange('experience', player.experience);
+
+        const levelUps = [];
+        while (player.experience >= player.experienceToNext) {
+            player.experience -= player.experienceToNext;
+            player.level += 1;
+            player.experienceToNext = this.calculateExperienceForLevel(player.level);
+            levelUps.push(player.level);
+        }
+
+        if (levelUps.length) {
+            this.notifyChange('player', this.player);
+            levelUps.forEach(level => {
+                this.eventSystem.emit('PLAYER_LEVEL_UP', {
+                    level,
+                    player: { ...this.player }
+                });
+            });
+        }
+
+        return { levelUps };
     }
 
     // =============== 成就管理 ===============
@@ -413,11 +638,23 @@ class GameState {
             kills: this.kills,
             gameTime: this.gameTime,
             player: { ...this.player },
+            combo: { ...this.combo },
+            waveModifier: this.waveModifier ? { ...this.waveModifier } : null,
+            perks: [...this.perks],
+            resources: { ...this.resources },
             statistics: { ...this.statistics },
             achievements: Array.from(this.achievements.entries())
         };
     }
 
+    /**
+     * 序列化游戏状态（测试所需）
+     * @returns {Object}
+     */
+    serialize() {
+        return this.getSnapshot();
+    }
+    
     /**
      * 从快照恢复状态
      * @param {Object} snapshot - 状态快照
@@ -431,10 +668,19 @@ class GameState {
         this.particles = [];
         this.damageNumbers = [];
         this.loot = [];
+        this.combo = snapshot.combo ? { ...snapshot.combo } : this.combo;
+        this.waveModifier = snapshot.waveModifier ? { ...snapshot.waveModifier } : null;
+        this.perks = Array.isArray(snapshot.perks) ? [...snapshot.perks] : [];
+        if (snapshot.resources) {
+            this.resources = { ...this.resources, ...snapshot.resources };
+        }
     }
 }
 
 // 导出模块
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = GameState;
+}
+if (typeof globalThis !== 'undefined') {
+    globalThis.GameState = GameState;
 }

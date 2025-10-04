@@ -443,6 +443,9 @@ class ElementConfig {
 }
 
 // 导出模块
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = ElementConfig;
+}
+if (typeof globalThis !== 'undefined') {
+    globalThis.ElementConfig = ElementConfig;
 }

@@ -51,22 +51,42 @@ class BalanceConfig {
             maxSpeed: 120,
             maxDamage: 80,
             
+            // 龙身体段配置 - 新系统
+            body: {
+                // 初始段数（波次1）
+                initialSegments: 3,
+                // 每波增加的段数
+                segmentsPerWave: 1,
+                // 最大段数
+                maxSegments: 20,
+                // 每段血量计算：基础血量 * (1 + 段索引 * 增长系数)
+                segmentHealthBase: 30,  // 基础血量
+                segmentHealthGrowth: 0.15, // 每节递增15%
+                // 段生长间隔（秒）(P0修复: 从4.5秒降低到3.5秒,确保后期龙段能完全生长)
+                growthInterval: 3.5,
+                // 段间距
+                spacing: 20,
+                // 段半径系数
+                radiusRatio: 0.85
+            },
+            
             // 特殊配置
             segmentHealthRatio: 0.8, // 龙段血量为头部的80%
             segmentDamageRatio: 0.6, // 龙段伤害为头部的60%
             
             // 龙技能系统配置
             skills: {
-                // 激光扫射技能
+                // 激光能量球技能
                 laserSweep: {
-                    cooldown: 8.0,      // 冷却时间（秒）
-                    duration: 2.0,      // 持续时间（秒）
-                    damage: 35,         // 激光伤害
-                    sweepAngle: Math.PI / 3, // 扫射角度（60度）
-                    sweepSpeed: Math.PI / 2, // 扫射速度（90度/秒）
-                    laserWidth: 15,     // 激光宽度
-                    range: 400,         // 激光射程
-                    triggerChance: 0.25 // 触发概率（25%）
+                    cooldown: 8.0,          // 冷却时间（秒）
+                    duration: 0.75,         // 能量球蓄力结束后停顿时间（秒）
+                    telegraphDuration: 1.1, // 预警时间（秒）
+                    recoveryDuration: 0.8,  // 收招时间（秒）
+                    damage: 40,             // 能量球命中伤害
+                    projectileSpeed: 320,   // 能量球速度
+                    projectileRadius: 16,   // 能量球半径
+                    range: 420,             // 能量球射程
+                    triggerChance: 0.25     // 触发概率（25%）
                 },
                 
                 // 冲撞攻击技能
@@ -77,6 +97,8 @@ class BalanceConfig {
                     damage: 50,         // 冲撞伤害
                     knockback: 120,     // 击退距离
                     shockwaveRadius: 80, // 冲击波半径
+                    telegraphDuration: 0.9, // 预警时间（秒）
+                    recoveryDuration: 0.6,  // 收招时间（秒）
                     triggerChance: 0.2  // 触发概率（20%）
                 },
                 
@@ -178,11 +200,11 @@ class BalanceConfig {
         // 基础配置
         baseWaveTime: 30000, // 30秒基础波次时间
         timeReduction: 1000,  // 每波减少1秒
-        minWaveTime: 15000,   // 最短15秒
+        minWaveTime: 18000,   // 最短18秒 (P0修复: 从15秒提升,缓解后期时间压力)
         
         // 敌人数量
         baseDragonCount: 1,
-        dragonIncrement: 0.3, // 每波增加0.3只龙（累积）
+        dragonIncrement: 0.25, // 每波增加0.25只龙（累积）(P0修复: 从0.3降低,减少后期龙数量)
         maxDragonsPerWave: 8,
         
         // Boss波次
@@ -199,31 +221,57 @@ class BalanceConfig {
     };
 
     /**
-     * 道具掉落配置
+     * 道具掉落配置 - 与技能系统配套
      */
     static LOOT = {
-        // 基础掉落率
-        baseDropChance: 0.25,
-        eliteDropChance: 0.6,
-        bossDropChance: 1.0,
+        // 龙身体段掉落率（每段必掉）
+        segmentDropChance: 1.0,
+        // 龙头部掉落率
+        dragonHeadDropChance: 1.0,
         
-        // 道具类型权重
+        // 掉落类型权重（针对技能系统）
         dropWeights: {
-            health: 30,      // 回血道具
-            mana: 25,        // 法力道具
-            damage: 20,      // 临时伤害提升
-            speed: 15,       // 临时速度提升
-            rare: 10         // 稀有道具
+            rapidFire: 25,      // 快速射击增强
+            scatter: 25,        // 散射增强
+            damageBoost: 25,    // 伤害增强
+            attackSpeed: 25,    // 射速提升（永久）
+            health: 15,         // 生命回复
+            mana: 15,           // 法力回复
+            coin: 30            // 金币
         },
         
         // 道具效果
         effects: {
-            health: { value: 25, duration: 0 },           // 立即回复25血
-            mana: { value: 30, duration: 0 },             // 立即回复30法力
-            damage: { multiplier: 1.5, duration: 15000 }, // 15秒内伤害+50%
-            speed: { multiplier: 1.3, duration: 10000 },  // 10秒内速度+30%
-            rare: { scoreMultiplier: 2.0, duration: 20000 } // 20秒双倍分数
-        }
+            // 技能增强道具
+            rapidFire: { 
+                type: 'skill_enhance',
+                description: '快速射击冷却-10%',
+                cooldownReduction: 0.1 
+            },
+            scatter: { 
+                type: 'skill_enhance',
+                description: '散射子弹+1',
+                bulletBonus: 1 
+            },
+            damageBoost: { 
+                type: 'skill_enhance',
+                description: '伤害增强持续+1秒',
+                durationBonus: 1000 
+            },
+            attackSpeed: { 
+                type: 'permanent',
+                description: '永久射速+10%',
+                fireRateBonus: 0.1,
+                maxStacks: 10
+            },
+            // 基础道具
+            health: { value: 25, duration: 0 },
+            mana: { value: 30, duration: 0 },
+            coin: { value: 50, duration: 0 }
+        },
+        
+        // 段掉落递增（后面的段掉落更好的东西）
+        segmentQualityScale: 0.1  // 每段增加10%掉落稀有物品概率
     };
 
     /**
@@ -276,31 +324,72 @@ class BalanceConfig {
     };
 
     /**
-     * 技能系统平衡
+     * 技能系统平衡 - 简化版本（4个核心技能）
      */
     static SKILLS = {
-        // 全局技能修正
-        globalCooldownReduction: 0.9, // 技能冷却时间90%
-        globalManaCostReduction: 0.85, // 技能法力消耗85%
-        
-        // 技能解锁条件
-        unlockRequirements: {
-            volley: { wave: 1, cost: 0 },
-            burst: { wave: 3, cost: 150 },
-            shield: { wave: 5, cost: 400 },
-            timeWarp: { wave: 7, cost: 700 },
-            elementalStorm: { wave: 10, cost: 1200 },
-            dragonSlayer: { wave: 15, cost: 2500 }
+        // 主动技能配置
+        active: {
+            // 1. 快速射击 - 短时间内大幅提升射速
+            rapidFire: {
+                id: 'rapidFire',
+                name: '快速射击',
+                icon: '⚡',
+                description: '3秒内射速提升200%',
+                cooldown: 8000,      // 8秒冷却
+                duration: 3000,      // 持续3秒
+                fireRateBonus: 2.0,  // 射速+200%
+                manaCost: 20
+            },
+            
+            // 2. 散射 - 一次发射多个子弹
+            scatter: {
+                id: 'scatter',
+                name: '散射',
+                icon: '💥',
+                description: '发射5发扇形子弹',
+                cooldown: 6000,       // 6秒冷却
+                bulletCount: 5,       // 5发子弹
+                spreadAngle: 30,      // 扇形30度
+                damageMultiplier: 0.7, // 每发伤害70%
+                manaCost: 25
+            },
+            
+            // 3. 伤害增强 - 提升伤害
+            damageBoost: {
+                id: 'damageBoost',
+                name: '伤害增强',
+                icon: '🔥',
+                description: '5秒内伤害提升150%',
+                cooldown: 12000,      // 12秒冷却
+                duration: 5000,       // 持续5秒
+                damageBonus: 1.5,     // 伤害+150%
+                manaCost: 30
+            },
+            
+            // 4. 射速提升 - 永久提升
+            attackSpeedUp: {
+                id: 'attackSpeedUp',
+                name: '射速提升',
+                icon: '⏱️',
+                description: '永久提升射速10%（可叠加）',
+                cooldown: 0,          // 无冷却
+                fireRateBonus: 0.1,   // 每次+10%
+                maxStacks: 10,        // 最多10层
+                manaCost: 0,          // 通过掉落获得
+                stackable: true
+            }
         },
         
-        // 被动技能解锁
-        passiveUnlocks: {
-            quickReload: { wave: 2, cost: 100 },
-            doubleShot: { wave: 4, cost: 250 },
-            magicArmor: { wave: 6, cost: 500 },
-            manaEfficiency: { wave: 8, cost: 800 },
-            criticalHit: { wave: 9, cost: 1000 },
-            vampiric: { wave: 12, cost: 1800 }
+        // 全局技能修正
+        globalCooldownReduction: 0.9,
+        globalManaCostReduction: 0.85,
+        
+        // 技能解锁条件（全部初始解锁）
+        unlockRequirements: {
+            rapidFire: { wave: 1, cost: 0 },
+            scatter: { wave: 1, cost: 0 },
+            damageBoost: { wave: 1, cost: 0 },
+            attackSpeedUp: { wave: 1, cost: 0 }
         }
     };
 
@@ -308,15 +397,17 @@ class BalanceConfig {
      * 难度曲线配置
      */
     static DIFFICULTY = {
-        // 难度递增曲线
-        playerPowerGrowth: 1.15,  // 玩家每波实力增长15%
-        enemyPowerGrowth: 1.18,   // 敌人每波实力增长18%
+        // 难度递增曲线 (P0修复: 缩小成长率差距,避免后期难度失控)
+        playerPowerGrowth: 1.16,  // 玩家每波实力增长16% (从1.15提升)
+        enemyPowerGrowth: 1.17,   // 敌人每波实力增长17% (从1.18降低)
         
-        // 平衡点调整
+        // 平衡点调整 (P0修复: 增加后期平衡点加成)
         balancePoints: [
             { wave: 5, playerBonus: 1.1 },   // 第5波给玩家10%加成
             { wave: 10, playerBonus: 1.15 }, // 第10波给玩家15%加成
-            { wave: 20, playerBonus: 1.2 }   // 第20波给玩家20%加成
+            { wave: 15, playerBonus: 1.25 }, // 第15波给玩家25%加成 (新增)
+            { wave: 20, playerBonus: 1.35 }, // 第20波给玩家35%加成 (从1.2提升)
+            { wave: 25, playerBonus: 1.45 }  // 第25波给玩家45%加成 (新增)
         ],
         
         // 难度限制
@@ -396,6 +487,51 @@ class BalanceConfig {
             speed: Math.floor(speed),
             reward: Math.floor(reward)
         };
+    }
+
+    /**
+     * 计算龙身体段配置
+     * @param {number} waveNumber - 波次
+     * @returns {Object} 龙段配置
+     */
+    static getDragonBodyConfig(waveNumber) {
+        const config = this.ENEMIES.dragon;
+        const bodyConfig = config.body;
+        const wave = Math.max(1, waveNumber);
+        
+        // 计算当前波次的段数
+        const segmentCount = Math.min(
+            bodyConfig.initialSegments + Math.floor((wave - 1) / 2) * bodyConfig.segmentsPerWave,
+            bodyConfig.maxSegments
+        );
+        
+        return {
+            segmentCount,
+            spacing: bodyConfig.spacing,
+            radiusRatio: bodyConfig.radiusRatio,
+            growthInterval: bodyConfig.growthInterval
+        };
+    }
+
+    /**
+     * 计算龙身体段的血量
+     * @param {number} waveNumber - 波次
+     * @param {number} segmentIndex - 段索引（0开始，0=最老的段/尾部）
+     * @param {number} totalSegments - 总段数
+     * @returns {number} 该段的血量
+     */
+    static getDragonSegmentHealth(waveNumber, segmentIndex, totalSegments) {
+        const config = this.ENEMIES.dragon.body;
+        const wave = Math.max(1, waveNumber);
+        
+        // 基础血量随波次增长
+        const waveMultiplier = 1 + (wave - 1) * 0.2; // 每波+20%
+        const baseHealth = config.segmentHealthBase * waveMultiplier;
+        
+        // 段索引越大（越靠近头部），血量越高
+        const segmentMultiplier = 1 + (segmentIndex / Math.max(1, totalSegments - 1)) * config.segmentHealthGrowth;
+        
+        return Math.floor(baseHealth * segmentMultiplier);
     }
 
     /**
@@ -521,6 +657,9 @@ class BalanceConfig {
 }
 
 // 导出模块
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = BalanceConfig;
+}
+if (typeof globalThis !== 'undefined') {
+    globalThis.BalanceConfig = BalanceConfig;
 }

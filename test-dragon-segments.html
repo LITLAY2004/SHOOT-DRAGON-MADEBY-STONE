@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>龙段系统测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+            font-family: 'Courier New', monospace;
+        }
+        #gameCanvas {
+            border: 2px solid #4a90e2;
+            display: block;
+            margin: 20px auto;
+            background: #0f0f1e;
+        }
+        .info-panel {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 8px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: #0f3460;
+            border-radius: 4px;
+        }
+        .segment-list {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .segment-item {
+            padding: 6px;
+            margin: 4px 0;
+            background: #1a1a2e;
+            border-left: 3px solid #4a90e2;
+            font-size: 12px;
+        }
+        .segment-item.damaged {
+            border-left-color: #ff6b6b;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #357abd;
+        }
+    </style>
+</head>
+<body>
+    <div class="info-panel">
+        <h2>🐉 龙段系统测试</h2>
+        <div>
+            <button onclick="spawnTestDragon()">生成测试龙</button>
+            <button onclick="damageRandomSegment()">随机伤害一个段</button>
+            <button onclick="clearDragons()">清除所有龙</button>
+        </div>
+        <div class="stat-row">
+            <span>龙数量:</span>
+            <span id="dragonCount">0</span>
+        </div>
+        <div class="stat-row">
+            <span>当前波次:</span>
+            <span id="currentWave">1</span>
+        </div>
+        <div id="segmentList" class="segment-list"></div>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script type="module">
+        import BalanceConfig from './src/config/BalanceConfig.js';
+        import GameState from './src/core/GameState.js';
+        import GameController from './src/core/GameController.js';
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const gameState = new GameState();
+        const gameController = new GameController(canvas.width, canvas.height, gameState);
+
+        let dragons = [];
+        let lastTime = performance.now();
+
+        // 生成测试龙
+        window.spawnTestDragon = function() {
+            const wave = gameState.getWave();
+            const stats = BalanceConfig.getEnemyStats(wave, 'dragon');
+            
+            const dragon = {
+                id: `test-dragon-${Date.now()}`,
+                type: 'dragon',
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height - 100) + 50,
+                vx: (Math.random() - 0.5) * 60,
+                vy: (Math.random() - 0.5) * 60,
+                radius: 24,
+                health: stats.health,
+                maxHealth: stats.health,
+                damage: stats.damage,
+                speed: stats.speed,
+                reward: stats.reward,
+                color: '#ff6b6b',
+                glowColor: '#ff4444',
+                bodySegments: []
+            };
+
+            gameController.setupDragonBodySegments(dragon);
+            dragons.push(dragon);
+            updateUI();
+        };
+
+        // 随机伤害一个段
+        window.damageRandomSegment = function() {
+            if (dragons.length === 0) return;
+            
+            const dragon = dragons[Math.floor(Math.random() * dragons.length)];
+            if (!dragon.bodySegments || dragon.bodySegments.length === 0) return;
+            
+            const segment = dragon.bodySegments[Math.floor(Math.random() * dragon.bodySegments.length)];
+            const damage = 20;
+            segment.health = Math.max(0, segment.health - damage);
+            segment.hitFlash = 1.0;
+            
+            console.log(`伤害段 ${segment.segmentIndex}: ${segment.health}/${segment.maxHealth}`);
+            
+            // 检查段是否被摧毁
+            if (segment.health <= 0) {
+                const index = dragon.bodySegments.indexOf(segment);
+                if (index > -1) {
+                    dragon.bodySegments.splice(index, 1);
+                    console.log(`段已摧毁! 剩余 ${dragon.bodySegments.length} 段`);
+                }
+            }
+            
+            updateUI();
+        };
+
+        // 清除所有龙
+        window.clearDragons = function() {
+            dragons = [];
+            updateUI();
+        };
+
+        // 更新UI
+        function updateUI() {
+            document.getElementById('dragonCount').textContent = dragons.length;
+            document.getElementById('currentWave').textContent = gameState.getWave();
+            
+            const segmentList = document.getElementById('segmentList');
+            segmentList.innerHTML = '';
+            
+            dragons.forEach((dragon, dragonIndex) => {
+                const dragonHeader = document.createElement('div');
+                dragonHeader.className = 'segment-item';
+                dragonHeader.style.background = '#2a4858';
+                dragonHeader.innerHTML = `<strong>龙 #${dragonIndex + 1}</strong> - 段数: ${dragon.bodySegments?.length || 0} / ${dragon.targetSegmentCount || 0}`;
+                segmentList.appendChild(dragonHeader);
+                
+                if (dragon.bodySegments) {
+                    dragon.bodySegments.forEach((seg, idx) => {
+                        const segItem = document.createElement('div');
+                        segItem.className = 'segment-item';
+                        if (seg.health < seg.maxHealth) {
+                            segItem.classList.add('damaged');
+                        }
+                        const healthPercent = ((seg.health / seg.maxHealth) * 100).toFixed(0);
+                        segItem.innerHTML = `段 ${idx}: HP ${seg.health.toFixed(0)}/${seg.maxHealth.toFixed(0)} (${healthPercent}%)`;
+                        segmentList.appendChild(segItem);
+                    });
+                }
+            });
+        }
+
+        // 渲染循环
+        function render() {
+            ctx.fillStyle = '#0f0f1e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 渲染每条龙
+            dragons.forEach(dragon => {
+                // 渲染身体段
+                if (dragon.bodySegments) {
+                    dragon.bodySegments.forEach((seg, idx) => {
+                        ctx.save();
+                        
+                        // 绘制段
+                        ctx.beginPath();
+                        ctx.arc(seg.x, seg.y, seg.radius, 0, Math.PI * 2);
+                        
+                        // 健康度颜色
+                        const healthRatio = seg.health / seg.maxHealth;
+                        const r = 255;
+                        const g = Math.floor(100 + healthRatio * 100);
+                        const b = Math.floor(100 + healthRatio * 100);
+                        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                        ctx.fill();
+                        
+                        // 击中闪烁
+                        if (seg.hitFlash > 0) {
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${seg.hitFlash})`;
+                            ctx.lineWidth = 3;
+                            ctx.stroke();
+                        }
+                        
+                        // 边框
+                        ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        
+                        // 段编号
+                        ctx.fillStyle = 'white';
+                        ctx.font = '10px monospace';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(idx, seg.x, seg.y);
+                        
+                        ctx.restore();
+                    });
+                }
+                
+                // 渲染头部
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(dragon.x, dragon.y, dragon.radius, 0, Math.PI * 2);
+                ctx.fillStyle = dragon.color;
+                ctx.fill();
+                ctx.strokeStyle = dragon.glowColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 头部标记
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('HEAD', dragon.x, dragon.y);
+                
+                ctx.restore();
+            });
+        }
+
+        // 更新循环
+        function update() {
+            const now = performance.now();
+            const deltaTime = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+            
+            dragons.forEach(dragon => {
+                // 更新位置
+                dragon.x += dragon.vx * deltaTime;
+                dragon.y += dragon.vy * deltaTime;
+                
+                // 边界反弹
+                if (dragon.x < dragon.radius || dragon.x > canvas.width - dragon.radius) {
+                    dragon.vx *= -1;
+                    dragon.x = Math.max(dragon.radius, Math.min(canvas.width - dragon.radius, dragon.x));
+                }
+                if (dragon.y < dragon.radius || dragon.y > canvas.height - dragon.radius) {
+                    dragon.vy *= -1;
+                    dragon.y = Math.max(dragon.radius, Math.min(canvas.height - dragon.radius, dragon.y));
+                }
+                
+                // 更新龙段
+                gameController.updateDragonBodySegments(dragon, deltaTime);
+            });
+            
+            render();
+            requestAnimationFrame(update);
+        }
+
+        // 启动
+        updateUI();
+        update();
+        
+        console.log('龙段系统测试已启动!');
+        console.log('- 点击"生成测试龙"创建龙');
+        console.log('- 点击"随机伤害一个段"测试段伤害');
+        console.log('- 观察段的生长过程（每4.5秒一个新段）');
+    </script>
+</body>
+</html>
+

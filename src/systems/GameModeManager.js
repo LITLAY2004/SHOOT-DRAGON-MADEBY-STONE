@@ -57,7 +57,7 @@ class GameModeManager {
             case LevelConfig.GAME_MODES.ADVENTURE:
                 return this.startAdventureMode(levelId);
             case LevelConfig.GAME_MODES.ENDLESS:
-                return this.startEndlessMode();
+                return this.startEndlessMode(this.game?.endlessDifficulty);
             case LevelConfig.GAME_MODES.SURVIVAL:
                 return this.startSurvivalMode();
             default:
@@ -126,7 +126,7 @@ class GameModeManager {
     /**
      * 启动无限模式
      */
-    startEndlessMode(difficulty = 'normal') {
+    startEndlessMode(difficulty) {
         console.log('🌊 启动无限模式');
         
         // 清理闯关模式临时状态
@@ -153,7 +153,12 @@ class GameModeManager {
         if (typeof EndlessMode !== 'undefined') {
             // 复用外部注入的实例，或创建新实例
             this.endlessMode = this.endlessMode || new EndlessMode(this.game);
-            const ok = this.endlessMode.start(difficulty || this.game.endlessDifficulty || 'normal');
+            const selectedDifficulty = difficulty || this.game?.endlessDifficulty || 'normal';
+            this.game.endlessDifficulty = selectedDifficulty;
+            if (typeof this.game.setDifficulty === 'function') {
+                this.game.setDifficulty(selectedDifficulty, { skipEvent: true, skipShopReapply: true });
+            }
+            const ok = this.endlessMode.start(selectedDifficulty);
             if (!ok) {
                 console.error('无限模式启动失败');
                 this.currentMode = null;
@@ -510,11 +515,12 @@ class GameModeManager {
         if (!level || !this.progressionSystem) return false;
         
         // 更新进度系统数据
-        const data = this.progressionSystem.data || { completedLevels: [], totalMoney: 0, totalKills: 0, gamesPlayed: 0 };
+        const data = this.progressionSystem.data || { completedLevels: [], totalTokens: 0, totalKills: 0, gamesPlayed: 0 };
         if (!data.completedLevels.includes(levelId)) {
             data.completedLevels.push(levelId);
         }
-        data.totalMoney = (data.totalMoney || 0) + (level.rewards.coins || 0);
+        const tokenReward = level.rewards.tokens ?? 0;
+        data.totalTokens = (data.totalTokens || 0) + tokenReward;
         data.totalKills = (data.totalKills || 0) + (this.currentKills || 0);
         data.gamesPlayed = (data.gamesPlayed || 0) + 1;
         
@@ -644,10 +650,11 @@ class GameModeManager {
      * 给予奖励
      */
     giveRewards(rewards) {
-        if (rewards.coins && this.game.gameState) {
-            this.game.gameState.money += rewards.coins;
+        const tokenReward = rewards.tokens ?? 0;
+        if (tokenReward && this.game.shopSystem) {
+            this.game.shopSystem.addCurrency(tokenReward);
         }
-        
+
         if (rewards.experience && this.game.player) {
             this.game.player.experience += rewards.experience;
         }
@@ -669,11 +676,11 @@ class GameModeManager {
         const config = LevelConfig.ENDLESS_MODE_CONFIG.rewards;
         
         // 基础奖励
-        const coins = config.baseCoinsPerWave * waveNumber;
+        const tokens = config.baseTokensPerWave * waveNumber;
         const experience = config.baseExperiencePerWave * waveNumber;
-        
-        this.giveRewards({ coins, experience });
-        
+
+        this.giveRewards({ tokens, experience });
+
         // 里程碑奖励
         const milestoneReward = config.milestoneRewards[waveNumber];
         if (milestoneReward) {
@@ -800,7 +807,7 @@ class GameModeManager {
 }
 
 // 导出类
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = GameModeManager;
 } else if (typeof window !== 'undefined') {
     window.GameModeManager = GameModeManager;

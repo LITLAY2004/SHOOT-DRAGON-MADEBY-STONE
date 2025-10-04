@@ -3,19 +3,37 @@
  * 保持与原版game.js的兼容性，但使用新的模块化架构
  */
 
-// 导入所有必要的模块
-// 注意：在浏览器环境中，这些文件需要按顺序加载
+(function setupDragonHunter(global) {
+    const canRequire = typeof module === 'object' && module && !module.__browser && module.exports && typeof require === 'function';
+    const existing = global && global.DragonHunterGame;
 
-/**
- * 数字龙猎游戏类 - 重构版本
- * 兼容原有接口，使用新架构实现
- */
-class DragonHunterGame {
+    if (existing && !canRequire) {
+        if (typeof module === 'object' && module && module.exports) {
+            module.exports = existing;
+        }
+        return;
+    }
+
+    // 导入所有必要的模块
+    // 注意：在浏览器环境中，这些文件需要按顺序加载
+    const ResolvedGameController = canRequire
+        ? require('./core/GameController.js')
+        : (typeof GameController !== 'undefined' ? GameController : null);
+
+    if (!ResolvedGameController) {
+        throw new Error('GameController module is not available');
+    }
+
+    /**
+     * 数字龙猎游戏类 - 重构版本
+     * 兼容原有接口，使用新架构实现
+     */
+    class DragonHunterGame {
     constructor(canvas = null) {
         console.log('初始化重构版游戏...');
         
         // 初始化游戏控制器
-        this.gameController = new GameController(canvas);
+        this.gameController = new ResolvedGameController(canvas);
         
         // 保持兼容性的属性映射
         this.setupCompatibilityLayer();
@@ -112,6 +130,41 @@ class DragonHunterGame {
             get: () => this.gameController.gameState.getParticles()
         });
 
+        Object.defineProperty(this, 'enhancementSystem', {
+            get: () => this.gameController.enhancementSystem
+        });
+
+        Object.defineProperty(this, 'resourceSystem', {
+            get: () => this.gameController.resourceSystem
+        });
+
+        Object.defineProperty(this, 'shopSystem', {
+            get: () => this.gameController.shopSystem
+        });
+
+        Object.defineProperty(this, 'eventSystem', {
+            get: () => this.gameController.eventSystem
+        });
+
+        Object.defineProperty(this, 'resources', {
+            get: () => this.gameController.gameState.getResources()
+        });
+
+        Object.defineProperty(this, 'abilitySystem', {
+            get: () => this.gameController.abilitySystem
+        });
+
+        Object.defineProperty(this, 'abilities', {
+            get: () => this.gameController.abilitySystem
+                ? this.gameController.abilitySystem.getAbilityStatus()
+                : []
+        });
+
+        Object.defineProperty(this, 'skillSystem', {
+            get: () => null,
+            set: () => {}
+        });
+
         // 系统设置映射
         Object.defineProperty(this, 'soundEnabled', {
             get: () => this.gameController.gameState.soundEnabled,
@@ -144,6 +197,23 @@ class DragonHunterGame {
     }
 
     /**
+     * 原版别名：start()
+     */
+    start() {
+        return this.startGame();
+    }
+
+    /**
+     * 设置难度（暴露给外部入口）
+     */
+    setDifficulty(difficulty = 'normal', options = {}) {
+        this.endlessDifficulty = difficulty;
+        if (this.gameController && typeof this.gameController.setDifficulty === 'function') {
+            this.gameController.setDifficulty(difficulty, options);
+        }
+    }
+
+    /**
      * 暂停游戏 - 兼容接口
      */
     pauseGame() {
@@ -162,6 +232,13 @@ class DragonHunterGame {
      */
     restartGame() {
         this.gameController.restart();
+    }
+
+    /**
+     * 原版别名：restart()
+     */
+    restart() {
+        return this.restartGame();
     }
 
     /**
@@ -228,6 +305,17 @@ class DragonHunterGame {
     }
 
     /**
+     * 生成普通龙 - 兼容接口
+     */
+    spawnDragon(element = null) {
+        const wave = this.gameController.gameState.getWave();
+        const dragonType = element || this.getRandomDragonType(wave);
+        const dragon = this.gameController.createDragon(dragonType);
+        this.gameController.gameState.addDragon(dragon);
+        return dragon;
+    }
+
+    /**
      * 创建多元素龙 - 兼容接口
      */
     createMultiElementDragon(element, x, y) {
@@ -251,6 +339,33 @@ class DragonHunterGame {
      */
     playerAttack() {
         this.gameController.playerAttack(this.player);
+    }
+
+    /**
+     * 兼容旧版 shoot 接口
+     * @param {number} targetX
+     * @param {number} targetY
+     */
+    shoot(targetX = null, targetY = null) {
+        const player = this.player;
+        if (!player) {
+            return null;
+        }
+
+        if (typeof targetX === 'number' && typeof targetY === 'number') {
+            const element = player.weaponElement || player.element || 'normal';
+            return this.createBullet(player.x, player.y, targetX, targetY, player.damage, element);
+        }
+
+        this.playerAttack();
+        return null;
+    }
+
+    /**
+     * 检查碰撞 - 兼容接口
+     */
+    checkCollisions() {
+        this.gameController.handleCollisions();
     }
 
     /**
@@ -417,6 +532,16 @@ class DragonHunterGame {
     }
 
     /**
+     * 获取完整游戏状态 - 兼容旧版
+     */
+    getGameState() {
+        if (typeof this.gameController.getState === 'function') {
+            return this.gameController.getState();
+        }
+        return this.gameController.gameState.getSnapshot();
+    }
+
+    /**
      * 保存游戏状态 - 兼容接口
      */
     saveGameState() {
@@ -497,6 +622,8 @@ class DragonHunterGame {
                 return this.gameController.eventSystem;
             case 'state':
                 return this.gameController.gameState;
+            case 'enhancement':
+                return this.gameController.enhancementSystem;
             case 'controller':
                 return this.gameController;
             default:
@@ -537,14 +664,15 @@ class DragonHunterGame {
             eventListeners: this.gameController.eventSystem.getListenerCount('*')
         };
     }
-}
+    }
 
-// 为了兼容性，也创建旧的类名别名
-if (typeof window !== 'undefined') {
-    window.DragonHunterGame = DragonHunterGame;
-}
+    // 为了兼容性，也创建旧的类名别名
+    if (global) {
+        global.DragonHunterGame = DragonHunterGame;
+    }
 
-// 导出模块
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DragonHunterGame;
-}
+    // 导出模块
+    if (typeof module === 'object' && module && module.exports) {
+        module.exports = DragonHunterGame;
+    }
+}(typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this)));

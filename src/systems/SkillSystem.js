@@ -378,7 +378,9 @@ class SkillSystem {
         const dragon = this.game.stoneDragon;
         
         // 对所有龙段造成巨额伤害
-        dragon.segments.forEach(segment => {
+        const segments = Array.isArray(dragon.enhancementSegments) ? dragon.enhancementSegments : [];
+
+        segments.forEach(segment => {
             const damage = this.game.bulletDamage * effects.dragonDamageMultiplier;
             segment.health -= damage;
             
@@ -515,7 +517,11 @@ class SkillSystem {
         const element = storm.elements[Math.floor(Math.random() * storm.elements.length)];
         
         // 对范围内的敌人造成伤害
-        this.game.stoneDragon.segments.forEach(segment => {
+        const segments = Array.isArray(this.game.stoneDragon.enhancementSegments)
+            ? this.game.stoneDragon.enhancementSegments
+            : [];
+
+        segments.forEach(segment => {
             const distance = Math.sqrt(
                 Math.pow(segment.x - this.game.width / 2, 2) + 
                 Math.pow(segment.y - this.game.height / 2, 2)
@@ -752,6 +758,9 @@ class SkillSystem {
 }
 
 // 导出模块
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = SkillSystem;
+}
+if (typeof globalThis !== 'undefined') {
+    globalThis.SkillSystem = SkillSystem;
 }

@@ -5,7 +5,7 @@
 
 module.exports = {
   // 测试环境
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   
   // 测试文件匹配模式
   testMatch: [
@@ -51,4 +51,17 @@ module.exports = {
   
   // 恢复模拟
   restoreMocks: true
+  ,
+  modulePathIgnorePatterns: [
+    '<rootDir>/.cursor-server',
+    '<rootDir>/.vscode-server',
+    '<rootDir>/.cursor'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/.cursor',
+    '<rootDir>/.cursor-server',
+    '<rootDir>/.vscode-server',
+    '<rootDir>/projects/tower-defense-game/.cursor-server'
+  ]
 };

@@ -1027,8 +1027,8 @@
                     <span>波次: <span id="wave" class="stat-value">1</span></span>
                 </div>
                 <div class="stat-display">
-                    <span class="stat-icon">💰</span>
-                    <span>金币: <span id="coins" class="stat-value">100</span></span>
+                    <span class="stat-icon">🪙</span>
+                    <span>代币: <span id="shop-tokens" class="stat-value">0</span></span>
                 </div>
             </div>
         </header>
@@ -1332,11 +1332,21 @@
     
     <!-- 加载游戏脚本 -->
     <script src="src/utils/MathUtils.js"></script>
-    <script src="src/core/EventSystem.js"></script>
-    <script src="src/core/GameController.js"></script>
-    <script src="src/config/BalanceConfig.js"></script>
     <script src="src/config/ElementConfig.js"></script>
+    <script src="src/config/BalanceConfig.js"></script>
+    <script src="src/core/EventSystem.js"></script>
+    <script src="src/core/GameState.js"></script>
+    <script src="src/systems/elements/ElementSystem.js"></script>
+    <script src="src/systems/EnhancementSystem.js"></script>
+    <script src="src/systems/ComboSystem.js"></script>
+    <script src="src/systems/WaveModifierSystem.js"></script>
+    <script src="src/systems/AbilitySystem.js"></script>
+    <script src="src/systems/ResourceSystem.js"></script>
+    <script src="src/services/PersistentStorage.js"></script>
+    <script src="src/systems/ShopSystem.js"></script>
     <script src="src/systems/SkillSystem.js"></script>
+    <script src="src/core/GameController.js"></script>
+    <script src="src/game-refactored.js"></script>
     <script src="src/ui/PopupExit.js"></script>
     <script src="src/game.js"></script>
     
@@ -1370,18 +1380,39 @@
             
             // 更新生命值
             const healthPercent = (player.health / player.maxHealth) * 100;
-            document.getElementById('health-bar').style.width = healthPercent + '%';
-            document.getElementById('health-text').textContent = `${Math.ceil(player.health)}/${player.maxHealth}`;
+            const healthBarEl = document.getElementById('health-bar');
+            if (healthBarEl) {
+                healthBarEl.style.width = healthPercent + '%';
+            }
+            const healthTextEl = document.getElementById('health-text');
+            if (healthTextEl) {
+                healthTextEl.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`;
+            }
             
             // 更新法力值
             const manaPercent = (player.mana / player.maxMana) * 100;
-            document.getElementById('mana-bar').style.width = manaPercent + '%';
-            document.getElementById('mana-text').textContent = `${Math.ceil(player.mana)}/${player.maxMana}`;
+            const manaBarEl = document.getElementById('mana-bar');
+            if (manaBarEl) {
+                manaBarEl.style.width = manaPercent + '%';
+            }
+            const manaTextEl = document.getElementById('mana-text');
+            if (manaTextEl) {
+                manaTextEl.textContent = `${Math.ceil(player.mana)}/${player.maxMana}`;
+            }
             
             // 更新其他状态
-            document.getElementById('score').textContent = gameInstance.score || 0;
-            document.getElementById('wave').textContent = gameInstance.currentWave || 1;
-            document.getElementById('coins').textContent = gameInstance.coins || 100;
+            const scoreEl = document.getElementById('score');
+            if (scoreEl) {
+                scoreEl.textContent = gameInstance.score || 0;
+            }
+            const waveEl = document.getElementById('wave');
+            if (waveEl) {
+                waveEl.textContent = gameInstance.currentWave || 1;
+            }
+            const tokenEl = document.getElementById('shop-tokens');
+            if (tokenEl) {
+                tokenEl.textContent = gameInstance.coins || 0;
+            }
             
             // 更新技能状态
             updateSkillBar();
@@ -1459,6 +1490,9 @@
                 // 创建游戏实例
                 if (typeof DragonHunterGame !== 'undefined') {
                     gameInstance = new DragonHunterGame(canvas);
+                    if (typeof gameInstance.setDifficulty === 'function') {
+                        gameInstance.setDifficulty('normal');
+                    }
                     
                     // 初始化效果系统
                     if (typeof ParticleSystem !== 'undefined') {
@@ -1621,7 +1655,7 @@
         // 处理模式选择
         function handleModeSelection(data) {
             console.log('选择的模式:', data);
-            startGameWithMode(data.mode, data.level);
+            startGameWithMode(data.mode, data.level, data.difficulty);
         }
 
         // 显示模式选择器
@@ -1638,8 +1672,8 @@
         }
 
         // 按模式启动游戏
-        function startGameWithMode(mode, level = null) {
-            console.log(`启动游戏 - 模式: ${mode}, 关卡: ${level}`);
+        function startGameWithMode(mode, level = null, difficulty = 'normal') {
+            console.log(`启动游戏 - 模式: ${mode}, 关卡: ${level}, 难度: ${difficulty}`);
             
             // 隐藏模式选择器
             document.getElementById('gameModeSelector').style.display = 'none';
@@ -1655,6 +1689,12 @@
                 // 创建游戏实例
                 if (typeof DragonHunterGame !== 'undefined') {
                     gameInstance = new DragonHunterGame(canvas);
+
+                    if (typeof gameInstance.setDifficulty === 'function') {
+                        gameInstance.setDifficulty(difficulty || 'normal');
+                    } else {
+                        gameInstance.endlessDifficulty = difficulty || 'normal';
+                    }
                     
                     // 初始化进度系统
                     if (typeof ProgressionSystem !== 'undefined') {
@@ -1691,7 +1731,8 @@
                     // 启动UI更新循环
                     setInterval(updateGameUI, 100);
                     
-                    showNotification(`🚀 ${mode ? '模式: ' + mode : '游戏'} 启动成功！`, 'success');
+                    const difficultyLabel = difficulty ? ` · 难度: ${difficulty}` : '';
+                    showNotification(`🚀 ${mode ? '模式: ' + mode : '游戏'} 启动成功${difficultyLabel}！`, 'success');
                 } else {
                     throw new Error('游戏类未加载');
                 }

@@ -406,12 +406,12 @@ describe('闯关模式测试', () => {
 
     describe('关卡完成处理', () => {
         it('完成关卡时应该给予奖励', () => {
-            const initialMoney = progressionSystem.data.totalMoney;
+            const initialTokens = progressionSystem.data.totalTokens;
             
             gameModeManager.startAdventureMode(1);
             gameModeManager.completeLevelWithRewards(1);
             
-            expect(progressionSystem.data.totalMoney).toBeGreaterThan(initialMoney);
+            expect(progressionSystem.data.totalTokens).toBeGreaterThan(initialTokens);
         });
 
         it('应该解锁下一关卡', () => {

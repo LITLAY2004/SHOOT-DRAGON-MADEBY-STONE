@@ -28,8 +28,14 @@ describe('无限模式测试', () => {
             enemies: [],
             towers: [],
             resources: {
-                money: 1000,
+                tokens: 1000,
                 lives: 20
+            },
+            shopSystem: {
+                currency: 1000,
+                addCurrency(amount) {
+                    this.currency += amount;
+                }
             },
             waveManager: createMock({
                 startWave: () => {},
@@ -372,12 +378,12 @@ describe('无限模式测试', () => {
         });
 
         it('祝福之雨事件应该给予奖励', () => {
-            const initialMoney = mockGame.resources.money;
-            
+            const initialTokens = mockGame.shopSystem.currency;
+
             endlessMode.triggerSpecialEvent('blessing_rain');
             endlessMode.updateSpecialEvent();
-            
-            expect(mockGame.resources.money).toBeGreaterThan(initialMoney);
+
+            expect(mockGame.shopSystem.currency).toBeGreaterThan(initialTokens);
         });
     });
 

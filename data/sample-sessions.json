@@ -1,0 +1,54 @@
+[
+  {
+    "sessionId": "sess_001",
+    "tenantId": "tenant-123",
+    "playerId": "player-1",
+    "gameMode": "ENDLESS",
+    "waveReached": 18,
+    "durationSeconds": 960,
+    "totalScore": 12850,
+    "resourcesCollected": 4200,
+    "dominantElementUsed": "fire",
+    "skillsUsage": [
+      { "skillId": "meteor", "casts": 6 },
+      { "skillId": "dash", "casts": 2 }
+    ],
+    "defeatCause": "player_death",
+    "startedAt": "2024-03-01T10:00:00Z",
+    "endedAt": "2024-03-01T10:16:00Z"
+  },
+  {
+    "sessionId": "sess_002",
+    "tenantId": "tenant-123",
+    "playerId": "player-2",
+    "gameMode": "CAMPAIGN",
+    "waveReached": 12,
+    "durationSeconds": 720,
+    "totalScore": 8800,
+    "resourcesCollected": 3100,
+    "dominantElementUsed": "ice",
+    "skillsUsage": [
+      { "skillId": "freeze", "casts": 5 }
+    ],
+    "defeatCause": "base_destroyed",
+    "startedAt": "2024-03-02T09:30:00Z",
+    "endedAt": "2024-03-02T09:42:00Z"
+  },
+  {
+    "sessionId": "sess_003",
+    "tenantId": "tenant-456",
+    "playerId": "player-9",
+    "gameMode": "SURVIVAL",
+    "waveReached": 9,
+    "durationSeconds": 540,
+    "totalScore": 6400,
+    "resourcesCollected": 2100,
+    "dominantElementUsed": "lightning",
+    "skillsUsage": [
+      { "skillId": "chain", "casts": 4 }
+    ],
+    "defeatCause": "player_death",
+    "startedAt": "2024-03-03T12:00:00Z",
+    "endedAt": "2024-03-03T12:09:00Z"
+  }
+]

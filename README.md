@@ -40,6 +40,21 @@
 ![兼容性测试页面](screenshots/test_page.png)
 *完整的功能测试系统，包括基础功能测试、兼容性检测和游戏演示验证。*
 
+### 🐉 龙体展示
+![龙的展示（正面）](screenshots/dragon_showcase_1.png)
+*龙头细节展示，可直观查看鳞片与能量核心。*
+
+![龙的展示（侧面）](screenshots/dragon_showcase_2.png)
+*侧面视角展示龙体结构与能量流动效果。*
+
+### 🔥 龙之技能：激光歼灭
+![龙的技能激光](screenshots/dragon_skill_laser.png)
+*聚焦能量释放成贯穿全场的激光束，展示技能特效与打击范围。*
+
+### 🧩 身体节点数值可视化
+![身体节点数值表示](screenshots/dragon_segment_stats.png)
+*新增的身体节点血量/伤害成长预览，帮助玩家理解龙的成长曲线。*
+
 ## 🎮 游戏特色
 
 ### 🎯 多种游戏模式
@@ -119,6 +134,20 @@
 - 📊 **游戏状态**: http://localhost:8000/game-status.html
 - 🛠️ **系统监控**: http://localhost:8000/test-page.html
 
+### 🧱 后台服务
+
+- **导出队列工作进程**: `JOB_SERVICE_FACTORY=./path/to/factory.js QUEUE_CLIENT_FACTORY=./path/to/queueFactory.js node scripts/export-worker-runtime.js`
+  - 默认提供内存队列（开发用途）；上线时请实现 `QUEUE_CLIENT_FACTORY` 以连接真实消息队列，并在工厂中返回同一 `ExportJobService` 实例。
+  - 在 Worker 启动逻辑中调用 `createExportWorkerRuntime({ queueClient, jobService }).start()`（脚本已封装）。
+- 推荐的开发工厂：
+  - `JOB_SERVICE_FACTORY=./server/factories/jobServiceFactory.js`
+  - `QUEUE_CLIENT_FACTORY=./server/factories/queueClientFactory.js`
+  - 可通过 `ANALYTICS_DATASET` 指定真实会话数据源（默认使用 `data/sample-sessions.json`）。
+- **管理员审计 API**: `node scripts/export-admin-api-server.js`
+  - 可通过 `PORT` 和 `AUDIT_DATASET` 环境变量自定义端口及数据源。
+  - 可设置 `ADMIN_API_TOKEN` 环境变量启用 Bearer 认证；浏览器端通过 `localStorage.setItem('adminApiToken', '你的Token')` 传入。
+  - 前端审计界面（`docs/admin/export-audit-log.html`）默认访问 `/api/admin/current-user` 与 `/api/admin/export-audit-log`。
+
 ## 💡 高级游戏技巧
 
 ### 🎯 技能搭配策略
@@ -178,8 +207,17 @@ tower-defense-game/
 ├── 📂 styles/            # 样式文件
 ├── 📂 tests/             # 测试文件
 ├── 📂 screenshots/       # 游戏截图
+├── 📂 data/              # 样例数据集（会话导出等）
 └── 📂 docs/              # 文档目录
 ```
+
+## 🗒️ 更新日志
+
+### v0.1.0
+- **难度分层**：为普通/困难/噩梦难度配置独立的敌人强度、掉落率与无限模式节奏，游戏切换难度后立即生效。
+- **奖励掉落**：龙的奖励节点被击毁时生成可拾取的强化战利品，玩家可以现场获得攻击、攻速、移动等增益。
+- **龙体成长**：后续身体段的生命与伤害会递增，配合数值可视化图示帮助理解成长曲线。
+- **文档与素材**：README 新增龙体展示、激光技能以及身体节点数值四张图，并记录本次改动。
 
 ## 🤝 参与贡献
 

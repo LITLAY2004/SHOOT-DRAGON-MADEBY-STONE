@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐉 数字龙猎 - Number Dragon Hunter</title>
+    
+    <!-- 引入科技风格主题 -->
+    <link rel="stylesheet" href="styles/cyber-theme.css">
+    <!-- 引入现代字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, rgba(79, 209, 199, 0.1) 0%, transparent 70%);
+        }
+        
+        .game-wrapper {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .game-title {
+            font-size: 2.5em;
+            color: #4fd1c7;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(79, 209, 199, 0.5);
+            font-weight: 700;
+        }
+        
+        .game-canvas {
+            border: 3px solid #4fd1c7;
+            border-radius: 10px;
+            background: #000;
+            box-shadow: 0 0 30px rgba(79, 209, 199, 0.3);
+        }
+        
+        .game-controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .game-button {
+            background: linear-gradient(45deg, #4fd1c7, #06b6d4);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 209, 199, 0.2);
+        }
+        
+        .game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 209, 199, 0.4);
+        }
+        
+        .game-button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .game-info {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(79, 209, 199, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .loading {
+            color: #4fd1c7;
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-wrapper">
+            <h1 class="game-title">🐉 数字龙猎</h1>
+            
+            <div id="loading-status" class="loading">
+                🔄 正在加载游戏模块...
+            </div>
+            
+            <div id="error-message" class="error" style="display: none;">
+                <!-- 错误信息将在这里显示 -->
+            </div>
+            
+            <canvas id="gameCanvas" class="game-canvas" width="800" height="600" style="display: none;"></canvas>
+            
+            <div class="game-controls" id="gameControls" style="display: none;">
+                <button class="game-button" onclick="startGame()">开始游戏</button>
+                <button class="game-button" onclick="pauseGame()">暂停</button>
+                <button class="game-button" onclick="resetGame()">重新开始</button>
+            </div>
+            
+            <div class="game-info" id="gameInfo" style="display: none;">
+                <p><strong>🎮 控制说明：</strong></p>
+                <p>• WASD / 方向键：移动角色</p>
+                <p>• 数字键 1-6：使用主动技能</p>
+                <p>• 鼠标移动：自动瞄准射击</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 按正确顺序加载模块 -->
+    <script>
+        (function(global) {
+            if (!global.module) {
+                global.module = { __browser: true };
+            } else {
+                global.module.__browser = true;
+                if (global.module.exports === undefined) {
+                    global.module.exports = undefined;
+                }
+            }
+            if (!global.exports) {
+                global.exports = {};
+            }
+        }(typeof window !== 'undefined' ? window : this));
+    </script>
+    <script src="src/utils/MathUtils.js"></script>
+    <script src="src/core/EventSystem.js"></script>
+    <script src="src/core/GameState.js"></script>
+    <script src="src/config/ElementConfig.js"></script>
+    <script src="src/config/BalanceConfig.js"></script>
+    <script src="src/systems/elements/ElementSystem.js"></script>
+    <script src="src/systems/EnhancementSystem.js"></script>
+    <script src="src/systems/ComboSystem.js"></script>
+    <script src="src/systems/WaveModifierSystem.js"></script>
+    <script src="src/systems/PerkSystem.js"></script>
+    <script src="src/systems/AbilitySystem.js"></script>
+    <script src="src/systems/ResourceSystem.js"></script>
+    <script src="src/systems/SkillSystem.js"></script>
+    <script src="src/core/GameController.js"></script>
+    
+    <!-- 创建浏览器兼容的游戏入口 -->
+    <script>
+        let game = null;
+        let gameStarted = false;
+        
+        // 等待所有模块加载完成
+        window.addEventListener('load', function() {
+            try {
+                // 检查所有必需的类是否已加载
+                const requiredClasses = [
+                    'EventSystem', 'GameState', 'ElementSystem', 'EnhancementSystem',
+                    'ComboSystem', 'WaveModifierSystem', 'PerkSystem', 'AbilitySystem',
+                    'ResourceSystem', 'SkillSystem', 'GameController'
+                ];
+                
+                const missingClasses = requiredClasses.filter(className => typeof window[className] === 'undefined');
+                
+                if (missingClasses.length > 0) {
+                    throw new Error(`缺少必需的类: ${missingClasses.join(', ')}`);
+                }
+                
+                // 创建DragonHunterGame类的浏览器版本
+                window.DragonHunterGame = class {
+                    constructor(canvas) {
+                        this.gameController = new GameController(canvas);
+                        
+                        // 代理主要属性和方法
+                        this.canvas = this.gameController.canvas;
+                        this.ctx = this.gameController.ctx;
+                        this.width = this.gameController.width;
+                        this.height = this.gameController.height;
+                        this.gameStarted = false;
+                        this.gameOver = false;
+                        this.score = 0;
+                        this.lives = 3;
+                        this.wave = 1;
+                        this.bullets = [];
+                        
+                        // 绑定方法
+                        this.startGame = () => this.gameController.startGame();
+                        this.pauseGame = () => this.gameController.pauseGame();
+                        this.stopGame = () => this.gameController.stopGame();
+                        this.shoot = (angle, power) => this.gameController.shoot(angle, power);
+                        this.destroy = () => this.gameController.destroy();
+                        
+                        console.log('✅ DragonHunterGame 实例创建成功');
+                    }
+                };
+                
+                // 更新UI状态
+                document.getElementById('loading-status').style.display = 'none';
+                document.getElementById('gameCanvas').style.display = 'block';
+                document.getElementById('gameControls').style.display = 'flex';
+                document.getElementById('gameInfo').style.display = 'block';
+                
+                console.log('🎮 游戏模块加载成功！');
+                
+            } catch (error) {
+                console.error('❌ 游戏加载失败:', error);
+                showError(`游戏加载失败: ${error.message}`);
+            }
+        });
+        
+        function startGame() {
+            try {
+                if (!game) {
+                    const canvas = document.getElementById('gameCanvas');
+                    game = new DragonHunterGame(canvas);
+                }
+                
+                if (!gameStarted) {
+                    game.startGame();
+                    gameStarted = true;
+                    console.log('🚀 游戏已启动');
+                } else {
+                    console.log('⚠️ 游戏已经在运行中');
+                }
+            } catch (error) {
+                console.error('❌ 启动游戏失败:', error);
+                showError(`启动游戏失败: ${error.message}`);
+            }
+        }
+        
+        function pauseGame() {
+            if (game && gameStarted) {
+                game.pauseGame();
+                console.log('⏸️ 游戏已暂停');
+            }
+        }
+        
+        function resetGame() {
+            try {
+                if (game) {
+                    game.destroy();
+                }
+                gameStarted = false;
+                
+                const canvas = document.getElementById('gameCanvas');
+                game = new DragonHunterGame(canvas);
+                console.log('🔄 游戏已重置');
+            } catch (error) {
+                console.error('❌ 重置游戏失败:', error);
+                showError(`重置游戏失败: ${error.message}`);
+            }
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.innerHTML = `<strong>错误:</strong> ${message}`;
+            errorElement.style.display = 'block';
+            
+            document.getElementById('loading-status').style.display = 'none';
+        }
+        
+        // 键盘事件处理
+        document.addEventListener('keydown', function(event) {
+            if (game && gameStarted) {
+                // 将键盘事件传递给游戏控制器
+                if (game.gameController && game.gameController.handleKeyDown) {
+                    game.gameController.handleKeyDown(event);
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', function(event) {
+            if (game && gameStarted) {
+                // 将键盘事件传递给游戏控制器
+                if (game.gameController && game.gameController.handleKeyUp) {
+                    game.gameController.handleKeyUp(event);
+                }
+            }
+        });
+        
+        // 鼠标事件处理
+        document.getElementById('gameCanvas').addEventListener('mousemove', function(event) {
+            if (game && gameStarted) {
+                // 将鼠标事件传递给游戏控制器
+                if (game.gameController && game.gameController.handleMouseMove) {
+                    game.gameController.handleMouseMove(event);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

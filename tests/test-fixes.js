@@ -53,7 +53,7 @@ const LevelConfigMock = {
                 specialConditions: []
             },
             rewards: {
-                coins: 50,
+                tokens: 50,
                 experience: 100,
                 skillPoints: 1,
                 unlocksLevel: 2
@@ -77,7 +77,7 @@ const LevelConfigMock = {
                 specialConditions: ['defeat_fire_dragon']
             },
             rewards: {
-                coins: 100,
+                tokens: 100,
                 experience: 200,
                 skillPoints: 2,
                 unlocksLevel: 3
@@ -118,7 +118,10 @@ const ProgressionSystemMock = function() {
             totalKills: 0,
             totalScore: 0,
             totalPlayTime: 0
-        }
+        },
+        totalTokens: 0,
+        totalKills: 0,
+        gamesPlayed: 0
     };
     
     this.loadProgress = () => {

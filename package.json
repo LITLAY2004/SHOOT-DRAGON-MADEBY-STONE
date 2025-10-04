@@ -4,13 +4,18 @@
   "description": "数字龙猎 - Number Dragon Hunter Game",
   "main": "index.html",
   "scripts": {
-    "test": "jest",
+    "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:integration": "jest --testPathPattern=integration",
     "test:unit": "jest --testPathPattern=unit",
     "serve": "python3 -m http.server 8080",
-    "serve:test": "python3 -m http.server 8081"
+    "serve:test": "python3 -m http.server 8081",
+    "codex": "codex",
+    "codex:safe": "codex -s read-only",
+    "codex:dev": "codex -s workspace-write",
+    "codex:test": "codex -s workspace-write 'run tests and fix any issues'",
+    "codex:analyze": "codex -s read-only 'analyze code quality and suggest improvements'"
   },
   "keywords": [
     "game",

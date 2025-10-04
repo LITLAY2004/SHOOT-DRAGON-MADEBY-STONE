@@ -20,8 +20,14 @@ describe('游戏模式集成测试', () => {
             enemies: [],
             towers: [],
             resources: {
-                money: 1000,
+                tokens: 1000,
                 lives: 20
+            },
+            shopSystem: {
+                currency: 1000,
+                addCurrency(amount) {
+                    this.currency += amount;
+                }
             },
             waveManager: createMock({
                 startWave: () => {},
@@ -287,16 +293,16 @@ describe('游戏模式集成测试', () => {
         it('模式切换应该正确处理资源状态', () => {
             // 在闯关模式下获得奖励
             gameModeManager.startAdventureMode(1);
-            const initialMoney = mockGame.resources.money;
-            
-            gameModeManager.completeLevelWithRewards(1);
-            
-            // 资源应该增加
-            expect(progressionSystem.data.totalMoney).toBeGreaterThan(0);
-            
-            // 切换到无限模式时，游戏资源应该重置
-            gameModeManager.startEndlessMode('normal');
-            expect(mockGame.resources.money).toBe(1000); // 重置为初始值
+        const initialTokens = mockGame.shopSystem.currency;
+
+        gameModeManager.completeLevelWithRewards(1);
+
+        // 资源应该增加
+        expect(progressionSystem.data.totalTokens).toBeGreaterThan(0);
+
+        // 切换到无限模式时，游戏资源应该重置
+        gameModeManager.startEndlessMode('normal');
+        expect(mockGame.shopSystem.currency).toBe(1000); // 重置为初始值
         });
 
         it('无限模式中的资源变化应该不影响闯关进度', () => {
@@ -304,7 +310,7 @@ describe('游戏模式集成测试', () => {
             
             gameModeManager.startEndlessMode('normal');
             // 模拟获得很多资源
-            mockGame.resources.money = 5000;
+            mockGame.shopSystem.currency = 5000;
             
             // 切换回闯关模式
             gameModeManager.startAdventureMode(1);
@@ -346,7 +352,7 @@ describe('游戏模式集成测试', () => {
                 progressionSystem.data.completedLevels.push(i);
             }
             progressionSystem.data.totalKills = 10000;
-            progressionSystem.data.totalMoney = 50000;
+            progressionSystem.data.totalTokens = 50000;
             
             // 创建大量排行榜数据
             for (let i = 0; i < 10; i++) {

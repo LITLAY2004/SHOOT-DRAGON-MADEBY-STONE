@@ -36,7 +36,7 @@ class LevelConfig {
                 totalWaves: 3
             },
             rewards: {
-                coins: 50,
+                tokens: 50,
                 experience: 100,
                 skillPoints: 1,
                 unlocksLevel: 2
@@ -75,7 +75,7 @@ class LevelConfig {
                 }
             },
             rewards: {
-                coins: 100,
+                tokens: 100,
                 experience: 200,
                 skillPoints: 2,
                 unlocksLevel: 3,
@@ -107,7 +107,7 @@ class LevelConfig {
                 elementalConflict: true
             },
             rewards: {
-                coins: 150,
+                tokens: 150,
                 experience: 300,
                 skillPoints: 3,
                 unlocksLevel: 4,
@@ -139,7 +139,7 @@ class LevelConfig {
                 environmentalHazards: ['lightning_strikes', 'wind_gusts']
             },
             rewards: {
-                coins: 200,
+                tokens: 200,
                 experience: 400,
                 skillPoints: 4,
                 unlocksLevel: 5,
@@ -181,7 +181,7 @@ class LevelConfig {
                 }
             },
             rewards: {
-                coins: 500,
+                tokens: 500,
                 experience: 1000,
                 skillPoints: 10,
                 unlocksLevel: 6,
@@ -214,7 +214,7 @@ class LevelConfig {
                 environmentalHazards: ['shadow_traps', 'maze_walls']
             },
             rewards: {
-                coins: 300,
+                tokens: 300,
                 experience: 600,
                 skillPoints: 5,
                 unlocksLevel: 7,
@@ -246,7 +246,7 @@ class LevelConfig {
                 elementalFusion: true
             },
             rewards: {
-                coins: 400,
+                tokens: 400,
                 experience: 800,
                 skillPoints: 6,
                 unlocksLevel: 8,
@@ -278,7 +278,7 @@ class LevelConfig {
                 timeDistortion: true
             },
             rewards: {
-                coins: 600,
+                tokens: 600,
                 experience: 1200,
                 skillPoints: 8,
                 unlocksLevel: 9,
@@ -320,7 +320,7 @@ class LevelConfig {
                 }
             },
             rewards: {
-                coins: 800,
+                tokens: 800,
                 experience: 1600,
                 skillPoints: 10,
                 unlocksLevel: 10,
@@ -363,7 +363,7 @@ class LevelConfig {
                 }
             },
             rewards: {
-                coins: 1500,
+                tokens: 1500,
                 experience: 3000,
                 skillPoints: 20,
                 unlocksLevel: null,
@@ -408,15 +408,15 @@ class LevelConfig {
         
         rewards: {
             // 基础奖励（每波）
-            baseCoinsPerWave: 10,
+            baseTokensPerWave: 10,
             baseExperiencePerWave: 20,
             
             // 里程碑奖励
             milestoneRewards: {
-                10: { coins: 100, experience: 200, skillPoints: 1 },
-                25: { coins: 250, experience: 500, skillPoints: 2 },
-                50: { coins: 500, experience: 1000, skillPoints: 5 },
-                100: { coins: 1000, experience: 2000, skillPoints: 10 }
+                10: { tokens: 100, experience: 200, skillPoints: 1 },
+                25: { tokens: 250, experience: 500, skillPoints: 2 },
+                50: { tokens: 500, experience: 1000, skillPoints: 5 },
+                100: { tokens: 1000, experience: 2000, skillPoints: 10 }
             }
         },
         
@@ -453,7 +453,7 @@ class LevelConfig {
         },
         
         rewards: {
-            baseCoinsPerWave: 50,
+            baseTokensPerWave: 50,
             baseExperiencePerWave: 100,
             survivalBonus: 1000 // 完成所有波次的奖励
         }
@@ -542,7 +542,7 @@ class LevelConfig {
 }
 
 // 导出配置
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module === 'object' && module && module.exports) {
     module.exports = LevelConfig;
 } else if (typeof window !== 'undefined') {
     window.LevelConfig = LevelConfig;
