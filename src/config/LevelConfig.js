@@ -30,10 +30,10 @@ class LevelConfig {
                 specialConditions: []
             },
             enemyWaves: {
-                spawnRate: 2000,        // 毫秒
-                maxConcurrent: 3,
+                spawnRate: 1700,
+                maxConcurrent: 4,
                 types: ['basic'],
-                totalWaves: 3
+                totalWaves: 4
             },
             rewards: {
                 tokens: 50,
@@ -41,10 +41,20 @@ class LevelConfig {
                 skillPoints: 1,
                 unlocksLevel: 2
             },
+            powerUps: {
+                spawnInterval: 20,
+                maxActive: 2,
+                lifespan: 24,
+                types: ['attack', 'move_speed']
+            },
             environment: {
                 backgroundTheme: 'forest',
                 ambientEffects: ['particles'],
-                musicTrack: 'calm'
+                musicTrack: 'calm',
+                obstacles: [
+                    { x: 140, y: 210, width: 200, height: 30 },
+                    { x: 480, y: 360, width: 200, height: 30 }
+                ]
             }
         },
         
@@ -60,16 +70,16 @@ class LevelConfig {
                 specialConditions: ['defeat_fire_dragon']
             },
             enemyWaves: {
-                spawnRate: 1800,
-                maxConcurrent: 4,
+                spawnRate: 1500,
+                maxConcurrent: 5,
                 types: ['basic', 'fire'],
-                totalWaves: 4,
+                totalWaves: 5,
                 bossWave: {
-                    wave: 4,
+                    wave: 5,
                     boss: {
                         type: 'fire_dragon',
-                        health: 200,
-                        damage: 30,
+                        health: 260,
+                        damage: 35,
                         element: 'fire'
                     }
                 }
@@ -81,10 +91,21 @@ class LevelConfig {
                 unlocksLevel: 3,
                 specialReward: 'fire_skill_unlock'
             },
+            powerUps: {
+                spawnInterval: 18,
+                maxActive: 3,
+                lifespan: 24,
+                types: ['attack', 'move_speed', 'attack_speed']
+            },
             environment: {
                 backgroundTheme: 'volcano',
                 ambientEffects: ['fire_particles', 'heat_waves'],
-                musicTrack: 'intense'
+                musicTrack: 'intense',
+                obstacles: [
+                    { x: 120, y: 150, width: 220, height: 28 },
+                    { x: 500, y: 180, width: 220, height: 28 },
+                    { x: 360, y: 320, width: 28, height: 200 }
+                ]
             }
         },
 
@@ -100,10 +121,10 @@ class LevelConfig {
                 specialConditions: ['use_elemental_combos']
             },
             enemyWaves: {
-                spawnRate: 1500,
-                maxConcurrent: 5,
+                spawnRate: 1300,
+                maxConcurrent: 6,
                 types: ['fire', 'ice', 'basic'],
-                totalWaves: 5,
+                totalWaves: 6,
                 elementalConflict: true
             },
             rewards: {
@@ -113,10 +134,23 @@ class LevelConfig {
                 unlocksLevel: 4,
                 specialReward: 'ice_skill_unlock'
             },
+            powerUps: {
+                spawnInterval: 16,
+                maxActive: 3,
+                lifespan: 24,
+                types: ['attack', 'move_speed', 'attack_speed', 'volley']
+            },
             environment: {
                 backgroundTheme: 'elemental_battlefield',
                 ambientEffects: ['fire_particles', 'ice_crystals', 'elemental_clash'],
-                musicTrack: 'epic_battle'
+                musicTrack: 'epic_battle',
+                obstacles: [
+                    { x: 80, y: 140, width: 180, height: 28 },
+                    { x: 540, y: 140, width: 180, height: 28 },
+                    { x: 260, y: 260, width: 280, height: 32 },
+                    { x: 120, y: 420, width: 220, height: 28 },
+                    { x: 480, y: 420, width: 220, height: 28 }
+                ]
             }
         },
 
@@ -132,10 +166,10 @@ class LevelConfig {
                 specialConditions: ['survive_lightning_storm']
             },
             enemyWaves: {
-                spawnRate: 1200,
-                maxConcurrent: 6,
+                spawnRate: 1100,
+                maxConcurrent: 7,
                 types: ['lightning', 'wind', 'basic'],
-                totalWaves: 6,
+                totalWaves: 7,
                 environmentalHazards: ['lightning_strikes', 'wind_gusts']
             },
             rewards: {
@@ -145,10 +179,24 @@ class LevelConfig {
                 unlocksLevel: 5,
                 specialReward: 'lightning_skill_unlock'
             },
+            powerUps: {
+                spawnInterval: 14,
+                maxActive: 4,
+                lifespan: 22,
+                types: ['attack', 'attack_speed', 'move_speed', 'volley', 'spread']
+            },
             environment: {
                 backgroundTheme: 'storm',
                 ambientEffects: ['lightning', 'rain', 'wind_effects'],
-                musicTrack: 'storm_symphony'
+                musicTrack: 'storm_symphony',
+                obstacles: [
+                    { x: 100, y: 160, width: 200, height: 32 },
+                    { x: 500, y: 160, width: 200, height: 32 },
+                    { x: 350, y: 120, width: 32, height: 220 },
+                    { x: 200, y: 360, width: 400, height: 28 },
+                    { x: 120, y: 460, width: 32, height: 140 },
+                    { x: 640, y: 460, width: 32, height: 140 }
+                ]
             }
         },
 
@@ -164,16 +212,16 @@ class LevelConfig {
                 specialConditions: ['defeat_ancient_dragon']
             },
             enemyWaves: {
-                spawnRate: 1000,
-                maxConcurrent: 8,
+                spawnRate: 950,
+                maxConcurrent: 9,
                 types: ['fire', 'ice', 'lightning', 'earth', 'basic'],
-                totalWaves: 8,
+                totalWaves: 9,
                 bossWave: {
-                    wave: 8,
+                    wave: 9,
                     boss: {
                         type: 'ancient_dragon',
-                        health: 1000,
-                        damage: 50,
+                        health: 1500,
+                        damage: 60,
                         element: 'all',
                         phases: 3,
                         specialAbilities: ['elemental_breath', 'ground_slam', 'flight_mode']
@@ -188,10 +236,24 @@ class LevelConfig {
                 specialReward: 'ancient_power_unlock',
                 achievementTitle: 'Dragon Slayer'
             },
+            powerUps: {
+                spawnInterval: 12,
+                maxActive: 4,
+                lifespan: 24,
+                types: ['attack', 'attack_speed', 'move_speed', 'volley', 'spread']
+            },
             environment: {
                 backgroundTheme: 'ancient_ruins',
                 ambientEffects: ['ancient_magic', 'floating_runes', 'energy_streams'],
-                musicTrack: 'final_boss'
+                musicTrack: 'final_boss',
+                obstacles: [
+                    { x: 160, y: 120, width: 480, height: 28 },
+                    { x: 160, y: 120, width: 28, height: 360 },
+                    { x: 612, y: 120, width: 28, height: 360 },
+                    { x: 220, y: 260, width: 360, height: 28 },
+                    { x: 220, y: 420, width: 360, height: 28 },
+                    { x: 360, y: 180, width: 32, height: 320 }
+                ]
             }
         },
 
@@ -207,10 +269,10 @@ class LevelConfig {
                 specialConditions: ['navigate_maze']
             },
             enemyWaves: {
-                spawnRate: 900,
-                maxConcurrent: 7,
+                spawnRate: 850,
+                maxConcurrent: 9,
                 types: ['shadow', 'dark', 'basic'],
-                totalWaves: 7,
+                totalWaves: 10,
                 environmentalHazards: ['shadow_traps', 'maze_walls']
             },
             rewards: {
@@ -220,10 +282,26 @@ class LevelConfig {
                 unlocksLevel: 7,
                 specialReward: 'shadow_skill_unlock'
             },
+            powerUps: {
+                spawnInterval: 10,
+                maxActive: 5,
+                lifespan: 26,
+                types: ['attack', 'attack_speed', 'move_speed', 'volley', 'spread']
+            },
             environment: {
                 backgroundTheme: 'shadow_maze',
                 ambientEffects: ['shadow_particles', 'maze_effects'],
-                musicTrack: 'mysterious'
+                musicTrack: 'mysterious',
+                obstacles: [
+                    { x: 100, y: 120, width: 600, height: 24 },
+                    { x: 100, y: 456, width: 600, height: 24 },
+                    { x: 100, y: 120, width: 24, height: 360 },
+                    { x: 676, y: 120, width: 24, height: 360 },
+                    { x: 220, y: 220, width: 360, height: 24 },
+                    { x: 220, y: 340, width: 360, height: 24 },
+                    { x: 220, y: 220, width: 24, height: 144 },
+                    { x: 556, y: 220, width: 24, height: 144 }
+                ]
             }
         },
 

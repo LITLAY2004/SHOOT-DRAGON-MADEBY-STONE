@@ -213,6 +213,12 @@
         }
     }
 
+    configureAdventureLevel(levelConfig = null) {
+        if (this.gameController && typeof this.gameController.configureAdventureLevel === 'function') {
+            this.gameController.configureAdventureLevel(levelConfig);
+        }
+    }
+
     /**
      * 暂停游戏 - 兼容接口
      */

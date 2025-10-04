@@ -74,6 +74,8 @@ class GameController {
         this.maxDragonsPerRun = 2;
         this.resetDragonRunState();
         this.resetDragonQueue();
+        this.adventurePowerUpConfig = null;
+        this.adventurePowerUpTimer = 0;
 
         this.difficultyProfiles = {
             normal: {
@@ -384,6 +386,58 @@ class GameController {
                 collectRange: resourceProfile.collectRange ?? 1,
                 lootValue: resourceProfile.lootValue ?? 1
             });
+        }
+    }
+
+    // ==================== 闯关模式辅助 ====================
+
+    configureAdventureLevel(levelConfig) {
+        if (!levelConfig) {
+            this.clearAdventureLevelConfig();
+            return;
+        }
+
+        const obstacles = levelConfig?.environment?.obstacles || [];
+        if (typeof this.gameState.setObstacles === 'function') {
+            this.gameState.setObstacles(obstacles);
+        }
+
+        if (typeof this.gameState.clearPowerUps === 'function') {
+            this.gameState.clearPowerUps();
+        }
+
+        const settings = levelConfig.powerUps || levelConfig.environment?.powerUps || {};
+        this.adventurePowerUpConfig = {
+            spawnInterval: Math.max(4, settings.spawnInterval || 18),
+            maxActive: Math.max(1, settings.maxActive || 3),
+            types: Array.isArray(settings.types) && settings.types.length
+                ? settings.types
+                : ['attack', 'attack_speed', 'move_speed', 'volley', 'spread'],
+            lifespan: Math.max(6, settings.lifespan || 25)
+        };
+        this.adventurePowerUpTimer = 0;
+
+        if (this.gameState.player) {
+            this.gameState.player.weaponMode = 'single';
+            this.gameState.player.weaponModeTimer = 0;
+            this.gameState.player.attackSpeedBonus = 0;
+        }
+    }
+
+    clearAdventureLevelConfig() {
+        this.adventurePowerUpConfig = null;
+        this.adventurePowerUpTimer = 0;
+        if (typeof this.gameState.clearObstacles === 'function') {
+            this.gameState.clearObstacles();
+        }
+        if (typeof this.gameState.clearPowerUps === 'function') {
+            this.gameState.clearPowerUps();
+        }
+        const player = this.gameState.player;
+        if (player) {
+            player.weaponMode = 'single';
+            player.weaponModeTimer = 0;
+            player.attackSpeedBonus = 0;
         }
     }
 
@@ -957,10 +1011,13 @@ class GameController {
         // 更新子弹
         const bullets = this.gameState.getBullets();
         bullets.forEach(bullet => this.updateBullet(bullet, deltaTime));
-        
+
         // 更新粒子
         this.updateParticles(deltaTime);
-        
+
+        // 更新强化果实
+        this.updatePowerUps(deltaTime);
+
         // 更新伤害数字
         this.updateDamageNumbers(deltaTime);
 
@@ -986,18 +1043,48 @@ class GameController {
 
         // 移动处理
         const moveSpeed = player.speed * deltaTime;
-        
-        if (this.keys['ArrowLeft'] || this.keys['a']) {
-            player.x = Math.max(player.radius, player.x - moveSpeed);
+        const prevX = player.x;
+        const prevY = player.y;
+        let nextX = player.x;
+        let nextY = player.y;
+
+        const moveLeft = this.keys['ArrowLeft'] || this.keys['a'];
+        const moveRight = this.keys['ArrowRight'] || this.keys['d'];
+        const moveUp = this.keys['ArrowUp'] || this.keys['w'];
+        const moveDown = this.keys['ArrowDown'] || this.keys['s'];
+
+        if (moveLeft && !moveRight) {
+            nextX = Math.max(player.radius, nextX - moveSpeed);
+        } else if (moveRight && !moveLeft) {
+            nextX = Math.min(this.width - player.radius, nextX + moveSpeed);
         }
-        if (this.keys['ArrowRight'] || this.keys['d']) {
-            player.x = Math.min(this.width - player.radius, player.x + moveSpeed);
+
+        if (moveUp && !moveDown) {
+            nextY = Math.max(player.radius, nextY - moveSpeed);
+        } else if (moveDown && !moveUp) {
+            nextY = Math.min(this.height - player.radius, nextY + moveSpeed);
         }
-        if (this.keys['ArrowUp'] || this.keys['w']) {
-            player.y = Math.max(player.radius, player.y - moveSpeed);
+
+        // 障碍物碰撞处理（逐轴）
+        if (this.isCircleCollidingWithObstacles(nextX, prevY, player.radius)) {
+            nextX = prevX;
         }
-        if (this.keys['ArrowDown'] || this.keys['s']) {
-            player.y = Math.min(this.height - player.radius, player.y + moveSpeed);
+        if (this.isCircleCollidingWithObstacles(prevX, nextY, player.radius)) {
+            nextY = prevY;
+        }
+        if (this.isCircleCollidingWithObstacles(nextX, nextY, player.radius)) {
+            nextX = prevX;
+            nextY = prevY;
+        }
+
+        player.x = nextX;
+        player.y = nextY;
+
+        const moved = (nextX !== prevX || nextY !== prevY);
+
+        this.clampPlayerPosition(player);
+        if (moved || player.x !== prevX || player.y !== prevY) {
+            this.gameState.notifyChange('player', player);
         }
 
         // 攻击处理
@@ -1049,20 +1136,31 @@ class GameController {
 
     getAttackSpeedMultiplier() {
         const permanentBonus = 1 + (this.gameState.permanentUpgrades?.attackSpeedBonus || 0);
+        const playerBonus = 1 + (this.gameState.player?.attackSpeedBonus || 0);
+        let total = permanentBonus * playerBonus;
         if (this.attackBuff && this.attackBuff.remaining > 0 && this.attackBuff.multiplier > 0) {
-            return this.attackBuff.multiplier * permanentBonus;
+            total *= this.attackBuff.multiplier;
         }
-        return permanentBonus;
+        return Math.max(0.1, total);
     }
 
     updatePlayerBuffs(deltaTime) {
-        if (!this.attackBuff) {
-            return;
+        if (this.attackBuff) {
+            if (this.attackBuff.remaining > 0) {
+                this.attackBuff.remaining = Math.max(0, this.attackBuff.remaining - deltaTime);
+                if (this.attackBuff.remaining === 0) {
+                    this.attackBuff.multiplier = 1;
+                }
+            }
         }
-        if (this.attackBuff.remaining > 0) {
-            this.attackBuff.remaining = Math.max(0, this.attackBuff.remaining - deltaTime);
-            if (this.attackBuff.remaining === 0) {
-                this.attackBuff.multiplier = 1;
+
+        const player = this.gameState.player;
+        if (player && typeof player.weaponModeTimer === 'number') {
+            if (player.weaponModeTimer > 0) {
+                player.weaponModeTimer = Math.max(0, player.weaponModeTimer - deltaTime);
+                if (player.weaponModeTimer === 0) {
+                    player.weaponMode = 'single';
+                }
             }
         }
     }
@@ -1100,23 +1198,50 @@ class GameController {
      */
     createBullet(source, target) {
         const angle = Math.atan2(target.y - source.y, target.x - source.x);
-        const bullet = {
-            id: Date.now() + Math.random(),
-            x: source.x,
-            y: source.y,
-            vx: Math.cos(angle) * 400,
-            vy: Math.sin(angle) * 400,
-            damage: source.damage,
-            element: source.weaponElement || 'normal',
-            radius: 3,
-            life: 2.0, // 2秒后消失
-            source: source,
-            target: target
-        };
+        const directions = this.getBulletDirections(angle, source.weaponMode);
+        const mode = (source.weaponMode || 'single').toString().toLowerCase();
+        const baseSpeed = 400;
+        const bullets = [];
+        let damageMultiplier = 1;
+        if (mode === 'volley') {
+            damageMultiplier = 0.85;
+        } else if (mode === 'spread' || mode === 'spread_shot') {
+            damageMultiplier = 0.65;
+        }
 
-        this.gameState.addBullet(bullet);
-        
-        this.eventSystem.emit('BULLET_FIRE', bullet);
+        directions.forEach(dir => {
+            const bullet = {
+                id: Date.now() + Math.random(),
+                x: source.x,
+                y: source.y,
+                vx: Math.cos(dir) * baseSpeed,
+                vy: Math.sin(dir) * baseSpeed,
+                damage: Math.max(1, Math.round(source.damage * damageMultiplier)),
+                element: source.weaponElement || 'normal',
+                radius: 3,
+                life: 2.0,
+                source,
+                target,
+                trajectoryAngle: dir
+            };
+            this.gameState.addBullet(bullet);
+            bullets.push(bullet);
+        });
+
+        bullets.forEach(b => this.eventSystem.emit('BULLET_FIRE', b));
+    }
+
+    getBulletDirections(baseAngle, mode) {
+        const normalizedMode = (mode || 'single').toString().toLowerCase();
+        switch (normalizedMode) {
+            case 'volley':
+                return [baseAngle - 0.08, baseAngle, baseAngle + 0.08];
+            case 'spread':
+            case 'spread_shot':
+                return [baseAngle - 0.25, baseAngle - 0.05, baseAngle + 0.05, baseAngle + 0.25];
+            default:
+                return [baseAngle];
+        }
     }
 
     /**
@@ -1435,7 +1560,9 @@ class GameController {
             this.applyDamageToPlayer(config.damage || 50, { source: dragon, type: 'dragon_charge' });
             player.x += state.direction.x * (config.knockback || 80);
             player.y += state.direction.y * (config.knockback || 80);
+            this.resolvePlayerObstacleOverlap(player, state.direction);
             this.clampPlayerPosition(player);
+            this.gameState.notifyChange('player', player);
             state.hasStruck = true;
         }
     }
@@ -1517,10 +1644,83 @@ class GameController {
         return Math.hypot(px - sx, py - sy);
     }
 
+    isCircleCollidingWithObstacles(cx, cy, radius) {
+        const obstacles = Array.isArray(this.gameState.obstacles)
+            ? this.gameState.obstacles
+            : [];
+        if (!Array.isArray(obstacles) || obstacles.length === 0) {
+            return false;
+        }
+        for (const obstacle of obstacles) {
+            if (this.circleRectIntersects(cx, cy, radius, obstacle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    circleRectIntersects(cx, cy, radius, rect = {}) {
+        const x = rect.x ?? 0;
+        const y = rect.y ?? 0;
+        const width = rect.width ?? 0;
+        const height = rect.height ?? 0;
+        const closestX = Math.max(x, Math.min(cx, x + width));
+        const closestY = Math.max(y, Math.min(cy, y + height));
+        const dx = cx - closestX;
+        const dy = cy - closestY;
+        return (dx * dx + dy * dy) <= radius * radius;
+    }
+
+    resolvePlayerObstacleOverlap(player, direction = { x: 0, y: 0 }) {
+        if (!player) {
+            return;
+        }
+        const obstacles = Array.isArray(this.gameState.obstacles)
+            ? this.gameState.obstacles
+            : [];
+        if (!obstacles.length) {
+            return;
+        }
+
+        let attempts = 0;
+        const maxAttempts = 12;
+        let dx = -(direction?.x || 0);
+        let dy = -(direction?.y || 0);
+        const hasDirection = Math.hypot(dx, dy) > 0.0001;
+
+        while (this.isCircleCollidingWithObstacles(player.x, player.y, player.radius) && attempts < maxAttempts) {
+            if (hasDirection) {
+                const invMag = 1 / Math.hypot(dx, dy);
+                player.x += dx * invMag * 4;
+                player.y += dy * invMag * 4;
+            } else {
+                player.x += (attempts % 2 === 0 ? 1 : -1) * 3;
+                player.y += (attempts % 3 === 0 ? 1 : -1) * 3;
+            }
+            attempts += 1;
+        }
+
+        if (!this.isCircleCollidingWithObstacles(player.x, player.y, player.radius)) {
+            return;
+        }
+
+        obstacles.forEach(ob => {
+            if (!this.circleRectIntersects(player.x, player.y, player.radius, ob)) {
+                return;
+            }
+            const closestX = Math.max(ob.x, Math.min(player.x, ob.x + ob.width));
+            const closestY = Math.max(ob.y, Math.min(player.y, ob.y + ob.height));
+            const overlapDX = player.x - closestX;
+            const overlapDY = player.y - closestY;
+            const distance = Math.hypot(overlapDX, overlapDY) || 1;
+            player.x = closestX + (overlapDX / distance) * (player.radius + 1);
+            player.y = closestY + (overlapDY / distance) * (player.radius + 1);
+        });
+    }
+
     clampPlayerPosition(player) {
         player.x = Math.max(player.radius, Math.min(this.width - player.radius, player.x));
         player.y = Math.max(player.radius, Math.min(this.height - player.radius, player.y));
-        this.gameState.notifyChange('player', player);
     }
 
     /**
@@ -1557,6 +1757,110 @@ class GameController {
                 particle.vy += particle.gravity * deltaTime;
             }
         }
+    }
+
+    updatePowerUps(deltaTime) {
+        const powerUps = Array.isArray(this.gameState.powerUps)
+            ? this.gameState.powerUps
+            : [];
+
+        for (let i = powerUps.length - 1; i >= 0; i--) {
+            const power = powerUps[i];
+            power.age = (power.age || 0) + deltaTime;
+            power.floatPhase = (power.floatPhase || 0) + deltaTime * 2.2;
+            const lifespan = power.lifespan || (this.adventurePowerUpConfig?.lifespan || 25);
+            if (power.age >= lifespan) {
+                this.gameState.removePowerUp(power);
+                continue;
+            }
+        }
+
+        this.updateAdventurePowerUpSpawns(deltaTime);
+    }
+
+    updateAdventurePowerUpSpawns(deltaTime) {
+        if (!this.adventurePowerUpConfig) {
+            return;
+        }
+
+        this.adventurePowerUpTimer += deltaTime;
+        const currentCount = Array.isArray(this.gameState.powerUps) ? this.gameState.powerUps.length : 0;
+        if (currentCount >= this.adventurePowerUpConfig.maxActive) {
+            return;
+        }
+
+        if (this.adventurePowerUpTimer >= this.adventurePowerUpConfig.spawnInterval) {
+            const spawned = this.spawnAdventurePowerUp();
+            if (spawned) {
+                this.adventurePowerUpTimer = 0;
+            }
+        }
+    }
+
+    spawnAdventurePowerUp() {
+        if (!this.adventurePowerUpConfig) {
+            return false;
+        }
+
+        const position = this.findAdventurePowerUpPosition();
+        if (!position) {
+            return false;
+        }
+
+        const type = this.pickAdventurePowerUpType();
+        const powerUp = {
+            id: `fruit-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
+            type,
+            x: position.x,
+            y: position.y,
+            radius: 16,
+            age: 0,
+            lifespan: this.adventurePowerUpConfig.lifespan,
+            floatPhase: Math.random() * Math.PI * 2
+        };
+
+        this.gameState.addPowerUp(powerUp);
+        this.eventSystem.emit('POWER_UP_SPAWNED', powerUp);
+        return true;
+    }
+
+    pickAdventurePowerUpType() {
+        const types = this.adventurePowerUpConfig?.types;
+        if (!Array.isArray(types) || types.length === 0) {
+            return 'attack';
+        }
+        const index = Math.floor(Math.random() * types.length);
+        return types[index];
+    }
+
+    findAdventurePowerUpPosition() {
+        const attempts = 30;
+        const margin = 40;
+        const player = this.gameState.player;
+        const radius = 16;
+        const existing = Array.isArray(this.gameState.powerUps) ? this.gameState.powerUps : [];
+        for (let i = 0; i < attempts; i++) {
+            const x = margin + Math.random() * (this.width - margin * 2);
+            const y = margin + Math.random() * (this.height - margin * 2);
+            if (player && Math.hypot(player.x - x, player.y - y) < player.radius + radius + 15) {
+                continue;
+            }
+            if (this.isCircleCollidingWithObstacles(x, y, radius + 4)) {
+                continue;
+            }
+            let overlaps = false;
+            for (const power of existing) {
+                if (Math.hypot((power.x || 0) - x, (power.y || 0) - y) < (power.radius || radius) + radius + 12) {
+                    overlaps = true;
+                    break;
+                }
+            }
+            if (overlaps) {
+                continue;
+            }
+            return { x, y };
+        }
+        return null;
     }
 
     /**
@@ -1597,6 +1901,7 @@ class GameController {
     handleCollisions() {
         this.checkBulletDragonCollisions();
         this.checkPlayerDragonCollisions();
+        this.checkPlayerPowerUpCollisions();
     }
 
     /**
@@ -1926,6 +2231,66 @@ class GameController {
         }
     }
 
+    checkPlayerPowerUpCollisions() {
+        const player = this.gameState.player;
+        const powerUps = Array.isArray(this.gameState.powerUps)
+            ? this.gameState.powerUps
+            : [];
+        if (!player || powerUps.length === 0) {
+            return;
+        }
+
+        for (let i = powerUps.length - 1; i >= 0; i--) {
+            const power = powerUps[i];
+            const distance = Math.hypot((power.x || 0) - player.x, (power.y || 0) - player.y);
+            if (distance <= (power.radius || 14) + player.radius) {
+                this.applyPowerUpEffect(power.type, player);
+                this.gameState.removePowerUp(power);
+                this.eventSystem.emit('POWER_UP_COLLECTED', { type: power.type, player });
+            }
+        }
+    }
+
+    applyPowerUpEffect(type, player) {
+        if (!player) {
+            return;
+        }
+
+        const normalized = (type || '').toString().toLowerCase();
+        switch (normalized) {
+            case 'attack': {
+                const bonus = Math.max(2, Math.round(player.damage * 0.12));
+                player.damage += bonus;
+                break;
+            }
+            case 'attack_speed': {
+                player.attackSpeedBonus = (player.attackSpeedBonus || 0) + 0.25;
+                break;
+            }
+            case 'move_speed': {
+                player.speed = Math.min(520, player.speed + 35);
+                break;
+            }
+            case 'volley': {
+                player.weaponMode = 'volley';
+                player.weaponModeTimer = Math.max(player.weaponModeTimer || 0, 18);
+                break;
+            }
+            case 'spread':
+            case 'spread_shot': {
+                player.weaponMode = 'spread';
+                player.weaponModeTimer = Math.max(player.weaponModeTimer || 0, 18);
+                break;
+            }
+            default: {
+                player.damage += Math.max(1, Math.round(player.damage * 0.08));
+                break;
+            }
+        }
+
+        this.gameState.notifyChange('player', player);
+    }
+
     /**
      * 处理玩家与龙的碰撞
      */
@@ -2131,6 +2496,8 @@ class GameController {
      */
     renderGame() {
         // 渲染实体
+        this.renderObstacles();
+        this.renderPowerUps();
         this.renderPlayer();
         this.renderDragons();
         this.renderBullets();
@@ -2167,6 +2534,83 @@ class GameController {
         // 渲染生命条
         this.renderEntityHealthBar(player, player.x, player.y - player.radius - 10);
         
+        this.ctx.restore();
+    }
+
+    renderObstacles() {
+        const obstacles = Array.isArray(this.gameState.obstacles)
+            ? this.gameState.obstacles
+            : [];
+        if (!Array.isArray(obstacles) || obstacles.length === 0) {
+            return;
+        }
+
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(76, 106, 160, 0.9)';
+        this.ctx.strokeStyle = '#c9d7ff';
+        this.ctx.lineWidth = 3;
+        this.ctx.shadowColor = 'rgba(145, 178, 255, 0.8)';
+        this.ctx.shadowBlur = 16;
+        obstacles.forEach(ob => {
+            const { x = 0, y = 0, width = 40, height = 40 } = ob || {};
+            this.ctx.globalAlpha = 0.95;
+            this.ctx.fillRect(x, y, width, height);
+            this.ctx.globalAlpha = 1;
+            if (typeof this.ctx.setLineDash === 'function') {
+                this.ctx.setLineDash([10, 6]);
+            }
+            this.ctx.strokeRect(x, y, width, height);
+            if (typeof this.ctx.setLineDash === 'function') {
+                this.ctx.setLineDash([]);
+            }
+        });
+        this.ctx.restore();
+    }
+
+    renderPowerUps() {
+        const powerUps = Array.isArray(this.gameState.powerUps)
+            ? this.gameState.powerUps
+            : [];
+        if (!powerUps.length) {
+            return;
+        }
+
+        const typeStyles = {
+            attack: { fill: '#ff6b6b', stroke: '#ff3b3b', icon: '⚔️' },
+            attack_speed: { fill: '#ffa94d', stroke: '#ff922b', icon: '⚡' },
+            move_speed: { fill: '#4dabf7', stroke: '#339af0', icon: '💨' },
+            volley: { fill: '#845ef7', stroke: '#7048e8', icon: '🎯' },
+            spread: { fill: '#63e6be', stroke: '#38d9a9', icon: '🌟' },
+            spread_shot: { fill: '#63e6be', stroke: '#38d9a9', icon: '🌟' }
+        };
+
+        this.ctx.save();
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.font = '16px sans-serif';
+        powerUps.forEach(power => {
+            const style = typeStyles[power.type] || typeStyles.attack;
+            const floatPhase = power.floatPhase || 0;
+            const offset = Math.sin(floatPhase) * 4;
+            const x = power.x;
+            const y = power.y + offset;
+            const radius = power.radius || 14;
+
+            this.ctx.beginPath();
+            this.ctx.fillStyle = style.fill;
+            this.ctx.strokeStyle = style.stroke;
+            this.ctx.lineWidth = 2;
+            const gradient = this.ctx.createRadialGradient(x, y, radius * 0.2, x, y, radius);
+            gradient.addColorStop(0, style.fill);
+            gradient.addColorStop(1, '#121826');
+            this.ctx.fillStyle = gradient;
+            this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.stroke();
+
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.fillText(style.icon, x, y);
+        });
         this.ctx.restore();
     }
 

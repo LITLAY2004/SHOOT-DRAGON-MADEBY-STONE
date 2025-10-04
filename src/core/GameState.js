@@ -45,7 +45,10 @@ class GameState {
             manaRegenRate,
             shield: null,
             invulnerableTimer: 0,
-            lastDashDirection: null
+            lastDashDirection: null,
+            weaponMode: 'single',
+            weaponModeTimer: 0,
+            attackSpeedBonus: 0
         };
 
         this.permanentUpgrades = {
@@ -66,6 +69,8 @@ class GameState {
         this.dragons = [];
         this.towers = [];
         this.loot = [];
+        this.obstacles = [];
+        this.powerUps = [];
         this.damageNumbers = [];
         this.particles = [];
         this.statusEffects = [];
@@ -310,6 +315,76 @@ class GameState {
             this.dragons.push(dragon);
         }
         this.notifyChange('dragons', this.getDragons());
+    }
+
+    /**
+     * 设置障碍物列表
+     * @param {Array} obstacles
+     */
+    setObstacles(obstacles = []) {
+        this.obstacles = Array.isArray(obstacles)
+            ? obstacles.map(ob => ({ ...ob }))
+            : [];
+        this.notifyChange('obstacles', this.getObstacles());
+    }
+
+    /**
+     * 获取障碍物
+     */
+    getObstacles() {
+        return Array.isArray(this.obstacles)
+            ? this.obstacles.map(ob => ({ ...ob }))
+            : [];
+    }
+
+    /**
+     * 清理所有障碍物
+     */
+    clearObstacles() {
+        this.obstacles = [];
+        this.notifyChange('obstacles', []);
+    }
+
+    /**
+     * 添加临场强化果实
+     */
+    addPowerUp(powerUp) {
+        if (!powerUp) {
+            return;
+        }
+        this.powerUps.push(powerUp);
+        this.notifyChange('powerUps', this.getPowerUps());
+    }
+
+    /**
+     * 移除强化果实
+     */
+    removePowerUp(powerUp) {
+        if (!powerUp) {
+            return;
+        }
+        const index = this.powerUps.indexOf(powerUp);
+        if (index !== -1) {
+            this.powerUps.splice(index, 1);
+            this.notifyChange('powerUps', this.getPowerUps());
+        }
+    }
+
+    /**
+     * 获取当前强化果实列表
+     */
+    getPowerUps() {
+        return Array.isArray(this.powerUps)
+            ? this.powerUps.map(pu => ({ ...pu }))
+            : [];
+    }
+
+    clearPowerUps() {
+        if (this.powerUps.length === 0) {
+            return;
+        }
+        this.powerUps.length = 0;
+        this.notifyChange('powerUps', []);
     }
 
     /**
@@ -643,7 +718,9 @@ class GameState {
             perks: [...this.perks],
             resources: { ...this.resources },
             statistics: { ...this.statistics },
-            achievements: Array.from(this.achievements.entries())
+            achievements: Array.from(this.achievements.entries()),
+            obstacles: this.getObstacles(),
+            powerUps: this.getPowerUps()
         };
     }
 
@@ -668,6 +745,8 @@ class GameState {
         this.particles = [];
         this.damageNumbers = [];
         this.loot = [];
+        this.obstacles = Array.isArray(snapshot.obstacles) ? snapshot.obstacles.map(ob => ({ ...ob })) : [];
+        this.powerUps = Array.isArray(snapshot.powerUps) ? snapshot.powerUps.map(pu => ({ ...pu })) : [];
         this.combo = snapshot.combo ? { ...snapshot.combo } : this.combo;
         this.waveModifier = snapshot.waveModifier ? { ...snapshot.waveModifier } : null;
         this.perks = Array.isArray(snapshot.perks) ? [...snapshot.perks] : [];

@@ -141,7 +141,15 @@ class GameModeManager {
         if (this.game && this.game.towerManager && typeof this.game.towerManager.clearTowers === 'function') {
             this.game.towerManager.clearTowers();
         }
-        
+
+        if (this.game) {
+            if (typeof this.game.configureAdventureLevel === 'function') {
+                this.game.configureAdventureLevel(null);
+            } else if (this.game.gameController && typeof this.game.gameController.clearAdventureLevelConfig === 'function') {
+                this.game.gameController.clearAdventureLevelConfig();
+            }
+        }
+
         this.currentMode = LevelConfig.GAME_MODES.ENDLESS;
         this.currentLevel = null;
         this.endlessWave = 1;
@@ -202,6 +210,14 @@ class GameModeManager {
         this.currentLevel = null;
         const config = LevelConfig.SURVIVAL_MODE_CONFIG;
         this.setupSurvivalMode(config);
+
+        if (this.game) {
+            if (typeof this.game.configureAdventureLevel === 'function') {
+                this.game.configureAdventureLevel(null);
+            } else if (this.game.gameController && typeof this.game.gameController.clearAdventureLevelConfig === 'function') {
+                this.game.gameController.clearAdventureLevelConfig();
+            }
+        }
         
         console.log('开始生存模式');
         return true;
@@ -283,6 +299,14 @@ class GameModeManager {
         // 设置音乐（如果有音频系统）
         if (this.game.audioSystem) {
             this.game.audioSystem.playBackgroundMusic(env.musicTrack);
+        }
+
+        if (this.game) {
+            if (typeof this.game.configureAdventureLevel === 'function') {
+                this.game.configureAdventureLevel(levelConfig);
+            } else if (this.game.gameController && typeof this.game.gameController.configureAdventureLevel === 'function') {
+                this.game.gameController.configureAdventureLevel(levelConfig);
+            }
         }
     }
 
@@ -557,7 +581,15 @@ class GameModeManager {
         const prevMode = this.currentMode;
         this.currentMode = null;
         this.currentLevel = null;
-        
+
+        if (this.game) {
+            if (typeof this.game.configureAdventureLevel === 'function') {
+                this.game.configureAdventureLevel(null);
+            } else if (this.game.gameController && typeof this.game.gameController.clearAdventureLevelConfig === 'function') {
+                this.game.gameController.clearAdventureLevelConfig();
+            }
+        }
+
         if (this.game && this.game.eventSystem) {
             try { this.game.eventSystem.emit('mode_stopped', { mode: prevMode }); } catch (e) {}
         }
